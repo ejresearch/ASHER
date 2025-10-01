@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASHER - AI Provider A/B/C/D Testing</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>ASHER</h1>
+            <p>AI Testing Lab - Simultaneous Multi-Provider Comparison</p>
+        </div>
+        <div class="theme-toggle">
+            <span class="theme-label">Light</span>
+            <div class="theme-switch active" onclick="toggleTheme()" id="theme-switch">
+                <div class="theme-switch-slider"></div>
+            </div>
+            <span class="theme-label">Dark</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+
+        <!-- Configuration Panel (Left Sidebar) -->
+        <aside class="config-panel">
+            <div class="config-section">
+                <h2>Configuration</h2>
+
+                <!-- System Prompt -->
+                <div class="config-group">
+                    <label>System Prompt</label>
+                    <textarea id="system-prompt" rows="8" placeholder="Enter system instructions for all AI providers...">You are a helpful AI assistant. Provide clear, accurate, and concise responses.</textarea>
+                </div>
+
+                <!-- Reference Documents -->
+                <div class="config-group">
+                    <label>Reference Documents</label>
+                    <div class="reference-docs-header">
+                        <span class="ref-count" id="ref-count">0 documents</span>
+                        <div class="doc-buttons">
+                            <button class="add-doc-btn" onclick="uploadDocument()">📎 Upload</button>
+                            <button class="add-doc-btn" onclick="addReferenceDocument()">+ Text</button>
+                        </div>
+                    </div>
+                    <div id="reference-documents" class="reference-list">
+                        <!-- Reference documents will be added here -->
+                    </div>
+                </div>
+
+                <!-- Provider Selection with Status -->
+                <div class="config-group">
+                    <label>Providers</label>
+                    <div id="provider-status" class="provider-status-list">
+                        <div class="status-loading">Loading providers...</div>
+                    </div>
+                </div>
+
+                <!-- Test Controls -->
+                <div class="config-group">
+                    <label>Test Controls</label>
+                    <button class="clear-all-btn" onclick="clearAllChats()">Clear All Chats</button>
+                    <button class="export-btn" onclick="exportResults()">Export JSON</button>
+                    <button class="export-btn" onclick="exportAsPlainText()">Export Plain Text</button>
+                    <button class="export-btn" onclick="exportAsMarkdown()">Export Markdown</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chat Grid (4 Panels) -->
+        <main class="chat-grid">
+
+            <!-- OpenAI Panel -->
+            <div class="chat-panel" id="panel-openai">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <div class="provider-badge openai">OpenAI GPT-4.1</div>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-openai')" title="Expand/Collapse">⛶</button>
+                    </div>
+                    <div class="panel-stats">
+                        <span class="stat" id="openai-tokens">0 tokens</span>
+                        <span class="stat" id="openai-time">0ms</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="messages-openai">
+                    <div class="empty-state">
+                        <p>OpenAI GPT-4.1 responses will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Claude Panel -->
+            <div class="chat-panel" id="panel-claude">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <div class="provider-badge claude">Claude Sonnet 4.5</div>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-claude')" title="Expand/Collapse">⛶</button>
+                    </div>
+                    <div class="panel-stats">
+                        <span class="stat" id="claude-tokens">0 tokens</span>
+                        <span class="stat" id="claude-time">0ms</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="messages-claude">
+                    <div class="empty-state">
+                        <p>Claude Sonnet 4.5 responses will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gemini Panel -->
+            <div class="chat-panel" id="panel-gemini">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <div class="provider-badge gemini">Gemini 2.5 Flash</div>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-gemini')" title="Expand/Collapse">⛶</button>
+                    </div>
+                    <div class="panel-stats">
+                        <span class="stat" id="gemini-tokens">0 tokens</span>
+                        <span class="stat" id="gemini-time">0ms</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="messages-gemini">
+                    <div class="empty-state">
+                        <p>Gemini 2.5 Flash responses will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grok Panel -->
+            <div class="chat-panel" id="panel-grok">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <div class="provider-badge grok">xAI Grok 4</div>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-grok')" title="Expand/Collapse">⛶</button>
+                    </div>
+                    <div class="panel-stats">
+                        <span class="stat" id="grok-tokens">0 tokens</span>
+                        <span class="stat" id="grok-time">0ms</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="messages-grok">
+                    <div class="empty-state">
+                        <p>xAI Grok 4 responses will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Input Bar (Bottom) -->
+    <footer class="input-bar">
+        <div class="input-container">
+            <textarea
+                id="test-message"
+                rows="2"
+                placeholder="Type your test message here... (it will be sent to all active providers simultaneously)"
+            ></textarea>
+            <button class="send-all-btn" onclick="sendToAllProviders()" id="send-btn">
+                Send to All Providers
+            </button>
+        </div>
+    </footer>
+
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Configure Provider</h3>
+                <button class="modal-close" onclick="closeApiKeyModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label id="modal-model-label">Model</label>
+                    <select id="model-select" class="modal-select">
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label id="modal-label">API Key</label>
+                    <input type="password" id="api-key-input" placeholder="sk-...">
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        API keys are stored in your browser's localStorage and never sent to our servers.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeApiKeyModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveApiKey()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app_new.js"></script>
+</body>
+</html>
