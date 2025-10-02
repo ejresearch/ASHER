@@ -51,3 +51,15 @@ htmlcov/
 *.tmp
 *.bak
 .cache/
+
+# User Data (never commit user-specific data)
+data/
+db/
+*.db
+*.sqlite
+*.sqlite3
+user_data/
+conversations/
+uploads/
+*.json.local
+exports/

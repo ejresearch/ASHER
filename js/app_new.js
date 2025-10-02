@@ -36,12 +36,21 @@ function loadTheme() {
 // State management
 let referenceDocuments = [];
 let conversationHistory = {};
+let conversationEvents = {}; // Track system prompt and document changes
+let currentSystemContext = null; // Track current system context
+let savedConversations = []; // Saved conversation history
+let isColumnsLayout = false;
+let isSyncScrollEnabled = false;
+let isConfigPanelOpen = false;
 
 // Initialize conversation history for all providers
 function initializeConversationHistory() {
     Object.keys(PROVIDER_MAP).forEach(providerId => {
         if (!conversationHistory[providerId]) {
             conversationHistory[providerId] = [];
+        }
+        if (!conversationEvents[providerId]) {
+            conversationEvents[providerId] = [];
         }
     });
 }
@@ -133,6 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeConversationHistory();
     loadProviderStatus();
     setupEnterKeyHandler();
+    loadLayoutPreference();
+    loadSyncScrollPreference();
+    loadConfigPanelState();
+    loadReferenceDocuments();
+    loadSavedConversations();
 });
 
 // Setup Enter key handler for textarea
@@ -287,17 +301,195 @@ function saveApiKey() {
     loadProviderStatus();
 }
 
+// Save reference documents to localStorage
+function saveReferenceDocuments() {
+    try {
+        localStorage.setItem('asher-reference-docs', JSON.stringify(referenceDocuments));
+    } catch (e) {
+        console.error('Failed to save reference documents:', e);
+        alert('Warning: Could not save reference documents. Storage may be full.');
+    }
+}
+
+// Load reference documents from localStorage
+function loadReferenceDocuments() {
+    try {
+        const saved = localStorage.getItem('asher-reference-docs');
+        if (saved) {
+            referenceDocuments = JSON.parse(saved);
+            renderReferenceDocuments();
+            console.log(`📚 Loaded ${referenceDocuments.length} reference documents from storage`);
+        }
+    } catch (e) {
+        console.error('Failed to load reference documents:', e);
+    }
+}
+
+// Save current conversation
+function saveCurrentConversation() {
+    // Check if there's any conversation to save
+    const hasContent = Object.values(conversationHistory).some(history => history.length > 0);
+
+    if (!hasContent) {
+        alert('No conversation to save. Start chatting first!');
+        return;
+    }
+
+    const name = prompt('Enter a name for this conversation:');
+    if (!name || !name.trim()) return;
+
+    const conversation = {
+        id: Date.now(),
+        name: name.trim(),
+        timestamp: new Date().toISOString(),
+        systemPrompt: document.getElementById('system-prompt').value,
+        referenceDocuments: JSON.parse(JSON.stringify(referenceDocuments)),
+        conversationHistory: JSON.parse(JSON.stringify(conversationHistory)),
+        conversationEvents: JSON.parse(JSON.stringify(conversationEvents))
+    };
+
+    savedConversations.push(conversation);
+    saveSavedConversations();
+    renderSavedConversations();
+
+    console.log(`💾 Saved conversation: ${name}`);
+}
+
+// Load a saved conversation
+function loadConversation(conversationId) {
+    const conversation = savedConversations.find(c => c.id === conversationId);
+    if (!conversation) return;
+
+    if (!confirm(`Load conversation "${conversation.name}"? This will replace your current conversation.`)) {
+        return;
+    }
+
+    // Restore system prompt
+    document.getElementById('system-prompt').value = conversation.systemPrompt;
+
+    // Restore reference documents
+    referenceDocuments = JSON.parse(JSON.stringify(conversation.referenceDocuments));
+    renderReferenceDocuments();
+
+    // Restore conversation history
+    conversationHistory = JSON.parse(JSON.stringify(conversation.conversationHistory));
+    conversationEvents = JSON.parse(JSON.stringify(conversation.conversationEvents));
+
+    // Render all conversations
+    Object.keys(conversationHistory).forEach(providerId => {
+        const provider = PROVIDER_MAP[providerId];
+        if (!provider) return;
+
+        const messagesContainer = document.getElementById(provider.messagesId);
+        messagesContainer.innerHTML = '';
+
+        // Render messages
+        conversationHistory[providerId].forEach(msg => {
+            addMessage(providerId, msg.role, msg.content);
+        });
+
+        // If no messages, show empty state
+        if (conversationHistory[providerId].length === 0) {
+            messagesContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>💬 ${provider.name} responses will appear here</p>
+                </div>
+            `;
+        }
+    });
+
+    console.log(`📂 Loaded conversation: ${conversation.name}`);
+}
+
+// Delete a saved conversation
+function deleteConversation(conversationId) {
+    const conversation = savedConversations.find(c => c.id === conversationId);
+    if (!conversation) return;
+
+    if (!confirm(`Delete conversation "${conversation.name}"?`)) {
+        return;
+    }
+
+    savedConversations = savedConversations.filter(c => c.id !== conversationId);
+    saveSavedConversations();
+    renderSavedConversations();
+
+    console.log(`🗑️ Deleted conversation: ${conversation.name}`);
+}
+
+// Save conversations to localStorage
+function saveSavedConversations() {
+    try {
+        localStorage.setItem('asher-saved-conversations', JSON.stringify(savedConversations));
+    } catch (e) {
+        console.error('Failed to save conversations:', e);
+        alert('Warning: Could not save conversations. Storage may be full.');
+    }
+}
+
+// Load saved conversations from localStorage
+function loadSavedConversations() {
+    try {
+        const saved = localStorage.getItem('asher-saved-conversations');
+        if (saved) {
+            savedConversations = JSON.parse(saved);
+            renderSavedConversations();
+            console.log(`📚 Loaded ${savedConversations.length} saved conversations`);
+        }
+    } catch (e) {
+        console.error('Failed to load saved conversations:', e);
+    }
+}
+
+// Render saved conversations list
+function renderSavedConversations() {
+    const container = document.getElementById('saved-conversations');
+
+    if (savedConversations.length === 0) {
+        container.innerHTML = '<div class="empty-references">No saved conversations</div>';
+        return;
+    }
+
+    let html = '';
+    // Sort by timestamp, newest first
+    const sorted = [...savedConversations].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    sorted.forEach(conv => {
+        const date = new Date(conv.timestamp).toLocaleDateString();
+        const time = new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        html += `
+            <div class="saved-conversation-item">
+                <div class="saved-conv-info">
+                    <div class="saved-conv-name">${conv.name}</div>
+                    <div class="saved-conv-meta">${date} at ${time}</div>
+                </div>
+                <div class="saved-conv-actions">
+                    <button class="saved-conv-load-btn" onclick="loadConversation(${conv.id})" title="Load">📂</button>
+                    <button class="saved-conv-delete-btn" onclick="deleteConversation(${conv.id})" title="Delete">✕</button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
 // Reference document management
 function addReferenceDocument() {
     const docId = Date.now();
     const doc = {
         id: docId,
         title: `Document ${referenceDocuments.length + 1}`,
-        content: ''
+        content: '',
+        type: 'text',
+        size: 0,
+        enabled: true
     };
 
     referenceDocuments.push(doc);
     renderReferenceDocuments();
+    saveReferenceDocuments();
 }
 
 // Upload document file
@@ -330,11 +522,15 @@ async function uploadDocument() {
             const doc = {
                 id: docId,
                 title: data.filename,
-                content: data.content
+                content: data.content,
+                type: data.file_type || 'file',
+                size: data.content.length,
+                enabled: true
             };
 
             referenceDocuments.push(doc);
             renderReferenceDocuments();
+            saveReferenceDocuments();
 
             console.log(`📄 Uploaded: ${data.filename} (${data.file_type})`);
 
@@ -350,27 +546,69 @@ async function uploadDocument() {
 function removeReferenceDocument(docId) {
     referenceDocuments = referenceDocuments.filter(doc => doc.id !== docId);
     renderReferenceDocuments();
-}
-
-function updateDocumentTitle(docId, title) {
-    const doc = referenceDocuments.find(d => d.id === docId);
-    if (doc) {
-        doc.title = title;
-    }
+    saveReferenceDocuments();
 }
 
 function updateDocumentContent(docId, content) {
     const doc = referenceDocuments.find(d => d.id === docId);
     if (doc) {
         doc.content = content;
+        doc.size = content.length;
+        saveReferenceDocuments();
     }
+}
+
+function toggleDocumentEnabled(docId) {
+    const doc = referenceDocuments.find(d => d.id === docId);
+    if (doc) {
+        doc.enabled = !doc.enabled;
+        renderReferenceDocuments();
+        saveReferenceDocuments();
+    }
+}
+
+function toggleDocumentExpand(docId) {
+    const contentArea = document.getElementById(`doc-content-${docId}`);
+    const expandBtn = document.getElementById(`expand-btn-${docId}`);
+
+    if (contentArea.style.display === 'none') {
+        contentArea.style.display = 'block';
+        expandBtn.textContent = '▼';
+    } else {
+        contentArea.style.display = 'none';
+        expandBtn.textContent = '▶';
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 10) / 10 + ' ' + sizes[i];
+}
+
+function getFileIcon(type) {
+    const iconMap = {
+        'pdf': '📕',
+        'text': '📝',
+        'markdown': '📝',
+        'html': '🌐',
+        'json': '{ }',
+        'csv': '📊',
+        'docx': '📘',
+        'doc': '📘'
+    };
+
+    return iconMap[type] || '📄';
 }
 
 function renderReferenceDocuments() {
     const container = document.getElementById('reference-documents');
     const countElement = document.getElementById('ref-count');
 
-    countElement.textContent = `${referenceDocuments.length} document${referenceDocuments.length !== 1 ? 's' : ''}`;
+    const enabledCount = referenceDocuments.filter(d => d.enabled).length;
+    countElement.textContent = `${referenceDocuments.length} document${referenceDocuments.length !== 1 ? 's' : ''} (${enabledCount} enabled)`;
 
     if (referenceDocuments.length === 0) {
         container.innerHTML = '<div class="empty-references">No reference documents added</div>';
@@ -379,21 +617,39 @@ function renderReferenceDocuments() {
 
     let html = '';
     referenceDocuments.forEach(doc => {
+        const icon = getFileIcon(doc.type);
+        const size = formatFileSize(doc.size);
+        const isTextDoc = doc.type === 'text';
+        const enabledClass = doc.enabled ? '' : 'doc-disabled';
+
         html += `
-            <div class="reference-item" data-id="${doc.id}">
-                <div class="reference-item-header">
+            <div class="doc-item ${enabledClass}" data-id="${doc.id}">
+                <div class="doc-item-header">
                     <input
-                        type="text"
-                        value="${doc.title}"
-                        placeholder="Document title..."
-                        onchange="updateDocumentTitle(${doc.id}, this.value)"
+                        type="checkbox"
+                        class="doc-checkbox"
+                        ${doc.enabled ? 'checked' : ''}
+                        onchange="toggleDocumentEnabled(${doc.id})"
+                        title="Enable/Disable"
                     >
-                    <button class="remove-doc-btn" onclick="removeReferenceDocument(${doc.id})">✕</button>
+                    <span class="doc-icon">${icon}</span>
+                    <div class="doc-info">
+                        <div class="doc-title">${doc.title}</div>
+                        <div class="doc-meta">${size}${doc.content ? ' • ' + doc.content.split(/\s+/).length + ' words' : ''}</div>
+                    </div>
+                    <div class="doc-actions">
+                        ${isTextDoc ? `<button class="doc-expand-btn" id="expand-btn-${doc.id}" onclick="toggleDocumentExpand(${doc.id})" title="Show/Hide Content">▶</button>` : ''}
+                        <button class="doc-remove-btn" onclick="removeReferenceDocument(${doc.id})" title="Remove">✕</button>
+                    </div>
                 </div>
-                <textarea
-                    placeholder="Paste reference content here..."
-                    onchange="updateDocumentContent(${doc.id}, this.value)"
-                >${doc.content}</textarea>
+                ${isTextDoc ? `
+                <div class="doc-content-area" id="doc-content-${doc.id}" style="display: none;">
+                    <textarea
+                        placeholder="Enter text content..."
+                        onchange="updateDocumentContent(${doc.id}, this.value)"
+                    >${doc.content}</textarea>
+                </div>
+                ` : ''}
             </div>
         `;
     });
@@ -419,11 +675,12 @@ function buildContext() {
 
     let context = systemPrompt;
 
-    // Add reference documents
-    if (referenceDocuments.length > 0) {
+    // Add reference documents (only enabled ones)
+    const enabledDocs = referenceDocuments.filter(doc => doc.enabled);
+    if (enabledDocs.length > 0) {
         context += '\n\n=== REFERENCE DOCUMENTS ===\n\n';
 
-        referenceDocuments.forEach(doc => {
+        enabledDocs.forEach(doc => {
             if (doc.content.trim()) {
                 context += `--- ${doc.title} ---\n${doc.content}\n\n`;
             }
@@ -431,6 +688,54 @@ function buildContext() {
     }
 
     return context;
+}
+
+// Detect if context has changed
+function detectContextChanges(activeProviders) {
+    const newContext = buildContext();
+
+    // Check if context changed
+    if (currentSystemContext !== null && currentSystemContext !== newContext) {
+        const timestamp = new Date().toISOString();
+        const changeEvent = {
+            type: 'context_change',
+            timestamp: timestamp,
+            message: 'System prompt or reference documents changed'
+        };
+
+        // Log the change for all active providers
+        activeProviders.forEach(providerId => {
+            if (!conversationEvents[providerId]) {
+                conversationEvents[providerId] = [];
+            }
+            conversationEvents[providerId].push(changeEvent);
+
+            // Add visual indicator to chat
+            addContextChangeIndicator(providerId, changeEvent.message);
+        });
+    }
+
+    currentSystemContext = newContext;
+}
+
+// Add context change indicator to chat
+function addContextChangeIndicator(providerId, message) {
+    const provider = PROVIDER_MAP[providerId];
+    if (!provider) return;
+
+    const messagesContainer = document.getElementById(provider.messagesId);
+
+    const indicatorDiv = document.createElement('div');
+    indicatorDiv.className = 'context-change-indicator';
+    indicatorDiv.innerHTML = `
+        <div class="context-change-content">
+            <span class="context-change-icon">⚙️</span>
+            <span class="context-change-text">${message}</span>
+        </div>
+    `;
+
+    messagesContainer.appendChild(indicatorDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Add message to chat panel
@@ -491,14 +796,9 @@ function updateStats(providerId, tokens, timeMs) {
     if (!provider) return;
 
     const tokensElement = document.getElementById(provider.tokensId);
-    const timeElement = document.getElementById(provider.timeId);
 
     if (tokensElement) {
         tokensElement.textContent = `${tokens} tokens`;
-    }
-
-    if (timeElement) {
-        timeElement.textContent = `${timeMs}ms`;
     }
 }
 
@@ -585,6 +885,9 @@ async function sendToAllProviders() {
         return;
     }
 
+    // Detect context changes before sending
+    detectContextChanges(activeProviders);
+
     // Build context from system prompt and reference documents
     const systemContext = buildContext();
 
@@ -624,10 +927,16 @@ function clearAllChats() {
         return;
     }
 
-    // Reset conversation history
+    // Reset conversation history and events
     Object.keys(conversationHistory).forEach(key => {
         conversationHistory[key] = [];
     });
+    Object.keys(conversationEvents).forEach(key => {
+        conversationEvents[key] = [];
+    });
+
+    // Reset current context
+    currentSystemContext = null;
 
     // Clear all message containers
     Object.values(PROVIDER_MAP).forEach(provider => {
@@ -640,7 +949,6 @@ function clearAllChats() {
 
         // Reset stats
         document.getElementById(provider.tokensId).textContent = '0 tokens';
-        document.getElementById(provider.timeId).textContent = '0ms';
     });
 
     console.log('🧹 All chats cleared');
@@ -650,6 +958,126 @@ function clearAllChats() {
 function togglePanelExpand(panelId) {
     const panel = document.getElementById(panelId);
     panel.classList.toggle('expanded');
+}
+
+// Toggle layout between quad split and 4 columns
+function toggleLayout() {
+    const chatGrid = document.querySelector('.chat-grid');
+    const toggleBtn = document.getElementById('layout-toggle');
+
+    isColumnsLayout = !isColumnsLayout;
+
+    if (isColumnsLayout) {
+        chatGrid.classList.add('columns-layout');
+        toggleBtn.textContent = 'Switch to Quad Split';
+    } else {
+        chatGrid.classList.remove('columns-layout');
+        toggleBtn.textContent = 'Switch to 4 Columns';
+    }
+
+    localStorage.setItem('asher-layout', isColumnsLayout ? 'columns' : 'quad');
+}
+
+// Load saved layout preference
+function loadLayoutPreference() {
+    const savedLayout = localStorage.getItem('asher-layout');
+    if (savedLayout === 'columns') {
+        const chatGrid = document.querySelector('.chat-grid');
+        const toggleBtn = document.getElementById('layout-toggle');
+
+        isColumnsLayout = true;
+        chatGrid.classList.add('columns-layout');
+        toggleBtn.textContent = 'Switch to Quad Split';
+    }
+}
+
+// Toggle synchronized scrolling
+function toggleSyncScroll() {
+    const checkbox = document.getElementById('sync-scroll');
+    isSyncScrollEnabled = checkbox.checked;
+
+    const messageContainers = [
+        document.getElementById('messages-openai'),
+        document.getElementById('messages-claude'),
+        document.getElementById('messages-gemini'),
+        document.getElementById('messages-grok')
+    ];
+
+    if (isSyncScrollEnabled) {
+        messageContainers.forEach((container, index) => {
+            container.addEventListener('scroll', createSyncScrollHandler(index, messageContainers));
+        });
+    } else {
+        messageContainers.forEach(container => {
+            // Remove all event listeners by cloning and replacing
+            const newContainer = container.cloneNode(true);
+            container.parentNode.replaceChild(newContainer, container);
+        });
+    }
+
+    localStorage.setItem('asher-sync-scroll', isSyncScrollEnabled);
+}
+
+// Create synchronized scroll handler
+function createSyncScrollHandler(sourceIndex, containers) {
+    return function(e) {
+        if (!isSyncScrollEnabled) return;
+
+        const scrollPercentage = e.target.scrollTop / (e.target.scrollHeight - e.target.clientHeight);
+
+        containers.forEach((container, index) => {
+            if (index !== sourceIndex) {
+                const targetScrollTop = scrollPercentage * (container.scrollHeight - container.clientHeight);
+                container.scrollTop = targetScrollTop;
+            }
+        });
+    };
+}
+
+// Load saved sync scroll preference
+function loadSyncScrollPreference() {
+    const savedSyncScroll = localStorage.getItem('asher-sync-scroll');
+    if (savedSyncScroll === 'true') {
+        const checkbox = document.getElementById('sync-scroll');
+        checkbox.checked = true;
+        toggleSyncScroll();
+    }
+}
+
+// Toggle configuration panel
+function toggleConfigPanel() {
+    const panel = document.getElementById('config-panel');
+    const hamburger = document.getElementById('hamburger-btn');
+
+    isConfigPanelOpen = !isConfigPanelOpen;
+
+    if (isConfigPanelOpen) {
+        panel.classList.remove('closed');
+        hamburger.classList.add('active');
+    } else {
+        panel.classList.add('closed');
+        hamburger.classList.remove('active');
+    }
+
+    localStorage.setItem('asher-config-panel', isConfigPanelOpen);
+}
+
+// Load saved config panel state
+function loadConfigPanelState() {
+    const savedState = localStorage.getItem('asher-config-panel');
+    const panel = document.getElementById('config-panel');
+    const hamburger = document.getElementById('hamburger-btn');
+
+    // Default to open if no saved state
+    if (savedState === null || savedState === 'true') {
+        isConfigPanelOpen = true;
+        panel.classList.remove('closed');
+        hamburger.classList.add('active');
+    } else {
+        isConfigPanelOpen = false;
+        panel.classList.add('closed');
+        hamburger.classList.remove('active');
+    }
 }
 
 // Export results as JSON
@@ -664,13 +1092,17 @@ function exportResults() {
             reference_documents: referenceDocuments,
             active_providers: activeProviders
         },
-        conversations: {}
+        conversations: {},
+        events: {}
     };
 
-    // Export conversation history for each provider
+    // Export conversation history and events for each provider
     Object.keys(conversationHistory).forEach(providerId => {
         if (conversationHistory[providerId].length > 0) {
             exportData.conversations[providerId] = conversationHistory[providerId];
+        }
+        if (conversationEvents[providerId] && conversationEvents[providerId].length > 0) {
+            exportData.events[providerId] = conversationEvents[providerId];
         }
     });
 
@@ -702,7 +1134,8 @@ function exportAsPlainText() {
     if (referenceDocuments.length > 0) {
         text += `REFERENCE DOCUMENTS:\n`;
         referenceDocuments.forEach(doc => {
-            text += `\n--- ${doc.title} ---\n${doc.content}\n`;
+            const status = doc.enabled ? 'ENABLED' : 'DISABLED';
+            text += `\n--- ${doc.title} (${status}) ---\n${doc.content}\n`;
         });
         text += `\n`;
     }
@@ -714,8 +1147,26 @@ function exportAsPlainText() {
             const provider = PROVIDER_MAP[providerId];
             text += `\n### ${provider.name} ###\n\n`;
 
-            conversationHistory[providerId].forEach(msg => {
-                text += `[${msg.role.toUpperCase()}]\n${msg.content}\n\n`;
+            // Interleave conversation messages and events by timestamp
+            const combined = [];
+
+            conversationHistory[providerId].forEach((msg, idx) => {
+                combined.push({ type: 'message', data: msg, index: idx });
+            });
+
+            if (conversationEvents[providerId]) {
+                conversationEvents[providerId].forEach(event => {
+                    combined.push({ type: 'event', data: event });
+                });
+            }
+
+            // For plain text, just show in order
+            combined.forEach(item => {
+                if (item.type === 'message') {
+                    text += `[${item.data.role.toUpperCase()}]\n${item.data.content}\n\n`;
+                } else if (item.type === 'event') {
+                    text += `[CONTEXT CHANGE - ${new Date(item.data.timestamp).toLocaleString()}]\n${item.data.message}\n\n`;
+                }
             });
         }
     });
@@ -738,7 +1189,8 @@ function exportAsMarkdown() {
     if (referenceDocuments.length > 0) {
         md += `## Reference Documents\n\n`;
         referenceDocuments.forEach(doc => {
-            md += `### ${doc.title}\n\n\`\`\`\n${doc.content}\n\`\`\`\n\n`;
+            const status = doc.enabled ? '✅ ENABLED' : '❌ DISABLED';
+            md += `### ${doc.title} ${status}\n\n\`\`\`\n${doc.content}\n\`\`\`\n\n`;
         });
     }
 
@@ -749,19 +1201,131 @@ function exportAsMarkdown() {
             const provider = PROVIDER_MAP[providerId];
             md += `### ${provider.name}\n\n`;
 
-            conversationHistory[providerId].forEach(msg => {
-                if (msg.role === 'user') {
-                    md += `**User:**\n\n${msg.content}\n\n`;
-                } else {
-                    md += `**Assistant:**\n\n${msg.content}\n\n`;
+            // Show events and messages
+            const combined = [];
+
+            conversationHistory[providerId].forEach((msg, idx) => {
+                combined.push({ type: 'message', data: msg, index: idx });
+            });
+
+            if (conversationEvents[providerId]) {
+                conversationEvents[providerId].forEach(event => {
+                    combined.push({ type: 'event', data: event });
+                });
+            }
+
+            combined.forEach(item => {
+                if (item.type === 'message') {
+                    const msg = item.data;
+                    if (msg.role === 'user') {
+                        md += `**User:**\n\n${msg.content}\n\n`;
+                    } else {
+                        md += `**Assistant:**\n\n${msg.content}\n\n`;
+                    }
+                    md += `---\n\n`;
+                } else if (item.type === 'event') {
+                    md += `> ⚙️ **Context Change** (${new Date(item.data.timestamp).toLocaleString()}): ${item.data.message}\n\n`;
                 }
-                md += `---\n\n`;
             });
         }
     });
 
     downloadFile(md, `asher-results-${Date.now()}.md`, 'text/markdown');
     console.log('📥 Markdown exported');
+}
+
+// Export as PDF
+function exportAsPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const systemPrompt = document.getElementById('system-prompt').value;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const maxWidth = pageWidth - (margin * 2);
+    let yPos = margin;
+
+    // Helper function to add text with word wrap
+    function addText(text, fontSize, isBold = false) {
+        doc.setFontSize(fontSize);
+        doc.setFont(undefined, isBold ? 'bold' : 'normal');
+
+        const lines = doc.splitTextToSize(text, maxWidth);
+        lines.forEach(line => {
+            if (yPos > pageHeight - margin) {
+                doc.addPage();
+                yPos = margin;
+            }
+            doc.text(line, margin, yPos);
+            yPos += fontSize * 0.5;
+        });
+        yPos += 5;
+    }
+
+    // Title
+    addText('ASHER Test Results', 18, true);
+    addText(`Date: ${new Date().toLocaleString()}`, 10);
+    yPos += 5;
+
+    // System Prompt
+    if (systemPrompt) {
+        addText('System Prompt:', 14, true);
+        addText(systemPrompt, 10);
+        yPos += 5;
+    }
+
+    // Reference Documents
+    if (referenceDocuments.length > 0) {
+        addText('Reference Documents:', 14, true);
+        referenceDocuments.forEach(doc => {
+            const status = doc.enabled ? '(ENABLED)' : '(DISABLED)';
+            addText(`${doc.title} ${status}`, 11, true);
+            if (doc.content) {
+                addText(doc.content, 9);
+            }
+        });
+        yPos += 5;
+    }
+
+    // Conversations
+    addText('Conversations:', 14, true);
+
+    Object.keys(conversationHistory).forEach(providerId => {
+        if (conversationHistory[providerId].length > 0) {
+            const provider = PROVIDER_MAP[providerId];
+
+            addText(provider.name, 12, true);
+
+            // Combine messages and events
+            const combined = [];
+            conversationHistory[providerId].forEach((msg, idx) => {
+                combined.push({ type: 'message', data: msg, index: idx });
+            });
+
+            if (conversationEvents[providerId]) {
+                conversationEvents[providerId].forEach(event => {
+                    combined.push({ type: 'event', data: event });
+                });
+            }
+
+            combined.forEach(item => {
+                if (item.type === 'message') {
+                    const msg = item.data;
+                    addText(`[${msg.role.toUpperCase()}]`, 10, true);
+                    addText(msg.content, 9);
+                } else if (item.type === 'event') {
+                    addText(`[CONTEXT CHANGE - ${new Date(item.data.timestamp).toLocaleString()}]`, 9, true);
+                    addText(item.data.message, 9);
+                }
+            });
+
+            yPos += 10;
+        }
+    });
+
+    doc.save(`asher-results-${Date.now()}.pdf`);
+    console.log('📥 PDF exported');
 }
 
 // Helper to download file

@@ -1,213 +1,219 @@
-# ASHER - AI Provider A/B/C/D Testing Platform
+# ASHER
+## LLM Testing Platform Developed by YT Research
 
-**AI Simultaneous Heuristic Evaluation & Response**
+**Compare AI providers side-by-side in real-time.**
 
-ASHER is a powerful web-based tool for simultaneously testing and comparing multiple AI providers side-by-side. Send the same prompt to OpenAI, Claude, Gemini, and Grok at once and compare their responses in real-time.
+Test OpenAI, Claude, Gemini, and Grok simultaneously with the same prompt and see how they compare.
 
-## Features
+---
 
-- 🚀 **Simultaneous Testing** - Send prompts to 4 AI providers at once
-- 🔄 **Real-time Comparison** - See responses side-by-side in a 2x2 grid
-- 📊 **Performance Metrics** - Track tokens used and response time for each provider
-- 📎 **Document Upload** - Upload reference documents (PDF, DOCX, MD, TXT, CSV, HTML, JSON) for context
-- 🎨 **Modern UI** - Clean interface with light/dark mode toggle
-- 💾 **Export Results** - Export conversations as JSON, Markdown, or Plain Text
-- ⚙️ **Model Switching** - Choose between different models from each provider
-- 🔒 **Privacy First** - API keys stored locally in your browser
+## ⚡ Quick Start
 
-## Supported Providers & Models
+**3 commands to get started:**
 
-### OpenAI
-- GPT-4.1
-- GPT-4o
-- o3
-- o4-mini
+```bash
+git clone https://github.com/yourusername/ASHER.git
+cd ASHER
+pip install -r requirements.txt
+```
 
-### Anthropic Claude
-- Claude Sonnet 4.5
-- Claude Opus 4.1
-- Claude Sonnet 4
+**Add your API keys:**
+```bash
+# Copy the template and edit it
+cp backend/.env.example backend/.env
+# Then add your actual API keys to backend/.env
+```
 
-### Google Gemini
-- Gemini 2.5 Pro
-- Gemini 2.5 Flash
+**Start ASHER:**
+```bash
+# Terminal 1 - Backend
+cd backend && python server.py
 
-### xAI Grok
-- Grok 4
-- Grok 3
+# Terminal 2 - Frontend
+python -m http.server 8080
+```
 
-## Quick Start
+**Open:** http://localhost:8080
 
-### Prerequisites
+📖 **Detailed instructions:** See [INSTALL.md](INSTALL.md)
 
-- Python 3.8 or higher
-- API keys for the providers you want to test:
-  - [OpenAI API key](https://platform.openai.com/api-keys)
-  - [Anthropic API key](https://console.anthropic.com/)
-  - [Google API key](https://makersuite.google.com/app/apikey)
-  - [xAI API key](https://console.x.ai/)
+---
 
-### Installation
+## ✨ Features
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/ASHER.git
-   cd ASHER
-   ```
+### Core
+- 🚀 **Simultaneous Testing** - Send to 4 providers at once
+- 🔄 **Real-time Comparison** - Side-by-side quad or column layout
+- 📊 **Token Tracking** - Monitor usage per provider
+- 💬 **Conversation History** - Save and reload past conversations
+- 📎 **Reference Documents** - Upload PDFs, DOCX, Markdown, TXT, CSV, HTML, JSON
+- ⚙️ **Context Change Tracking** - Visual indicators when prompts/docs change mid-conversation
 
-2. **Create a virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+### Export & Data
+- 💾 **Multiple Export Formats** - JSON, Plain Text, Markdown, PDF
+- 🗂️ **Conversation Management** - Save, load, and manage conversation history
+- 📝 **Document Control** - Enable/disable specific reference documents
+- 🔒 **Privacy First** - All data stored locally in browser (never shared)
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Interface
+- 🎨 **Modern Design** - Clean, professional UI
+- 🌓 **Light/Dark Mode** - Apple-style theme toggle
+- 📱 **Responsive Layout** - Works on desktop and tablets
+- ⛶ **Panel Expansion** - Focus on one provider's response
+- 🔄 **Sync Scroll** - Scroll all panels together
 
-4. **Set up environment variables**
+---
 
-   Create a `.env` file in the `backend` directory:
-   ```bash
-   cd backend
-   touch .env
-   ```
+## 🤖 Supported Models
 
-   Add your API keys to `.env`:
-   ```
-   OPENAI_API_KEY=sk-your-openai-key-here
-   ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
-   GOOGLE_API_KEY=your-google-api-key-here
-   XAI_API_KEY=your-xai-api-key-here
-   ```
+| Provider | Models |
+|----------|--------|
+| **OpenAI** | GPT-4.1, GPT-4o, o3, o4-mini |
+| **Anthropic** | Claude Sonnet 4.5, Opus 4.1, Sonnet 4 |
+| **Google** | Gemini 2.5 Pro, Gemini 2.5 Flash |
+| **xAI** | Grok 4, Grok 3 |
 
-5. **Start the backend server**
-   ```bash
-   cd backend
-   python server.py
-   ```
+💡 **Mix and match models** - Configure each provider independently
 
-   The server will start on `http://localhost:8080`
+---
 
-6. **Open the frontend**
+## 📋 Requirements
 
-   Simply open `index.html` in your web browser, or use a local server:
-   ```bash
-   # Navigate to project root
-   cd ..
+- **Python 3.8+**
+- **API Keys** (for providers you want to use):
+  - [OpenAI](https://platform.openai.com/api-keys)
+  - [Anthropic](https://console.anthropic.com/)
+  - [Google](https://makersuite.google.com/app/apikey)
+  - [xAI](https://console.x.ai/)
 
-   # Option 1: Python's built-in server
-   python3 -m http.server 8000
+---
 
-   # Option 2: Node.js http-server (if installed)
-   npx http-server -p 8000
-   ```
+## 📖 How to Use
 
-   Then visit `http://localhost:8000` in your browser.
+### First Time Setup
 
-## Usage
+1. Click the hamburger menu (☰) on the left
+2. Click the gear icon (⚙️) next to each provider you want to use
+3. Enter your API key and select a model
+4. Click "Save"
 
-### Basic Testing
+### Testing AI Models
 
-1. **Configure API Keys** (first time only)
-   - Click the gear icon (⚙️) next to each provider
-   - Enter your API key
-   - Select your preferred model
-   - Click "Save"
+1. **Optional:** Add a system prompt (e.g., "You are a helpful coding assistant")
+2. **Optional:** Upload reference documents or paste text
+3. Type your prompt in the input box
+4. Click "Send to All Providers"
+5. Compare responses side-by-side
 
-2. **Set System Prompt** (optional)
-   - Enter instructions that apply to all providers
-   - Example: "You are a helpful assistant specializing in technical writing"
+### Pro Tips
 
-3. **Add Reference Documents** (optional)
-   - Click "📎 Upload" to upload files
-   - Or click "+ Text" to paste text directly
-   - Documents are included in context for all providers
+- **💾 Save conversations** - Click "Save Current" to keep your chat history
+- **📂 Load conversations** - Click the folder icon to restore a saved conversation
+- **⛶ Expand panels** - Focus on one provider's response
+- **🔄 Sync scroll** - Enable to scroll all panels together
+- **📊 Track changes** - Context changes are marked with ⚙️ indicators
+- **🎨 Theme** - Toggle light/dark mode in the header
 
-4. **Send Test Messages**
-   - Type your prompt in the input box at the bottom
-   - Click "Send to All Providers"
-   - Watch responses appear in real-time across all panels
-
-5. **Compare Results**
-   - Review each provider's response
-   - Check token usage and response time
-   - Use the expand button (⛶) to focus on one panel
-
-### Advanced Features
-
-- **Panel Expansion** - Click ⛶ next to any provider name to expand that panel to fullscreen
-- **Export Results** - Use the export buttons to save conversations in different formats
-- **Clear Chats** - Reset all conversations with the "Clear All Chats" button
-- **Theme Toggle** - Switch between light and dark mode using the toggle in the header
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 ASHER/
-├── index.html              # Main HTML file
-├── css/
-│   └── styles.css         # Application styles
-├── js/
-│   └── app_new.js         # Frontend JavaScript
+├── index.html              # Main app
+├── css/styles.css          # Styling
+├── js/app_new.js           # Frontend logic
 ├── backend/
-│   ├── server.py          # FastAPI backend server
-│   ├── ai_providers.py    # AI provider integrations
-│   └── document_parser.py # Document parsing utilities
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+│   ├── server.py           # FastAPI server
+│   ├── ai_providers.py     # AI integrations
+│   └── document_parser.py  # File processing
+├── requirements.txt        # Dependencies
+├── INSTALL.md             # Step-by-step setup
+└── DATA_STORAGE.md        # Privacy & data info
 ```
 
-## API Endpoints
+## 🔧 Configuration
 
-The backend provides the following REST API:
-
-- `GET /providers` - List all available providers and their status
-- `POST /chat` - Send a chat message to a specific provider
-- `POST /upload/document` - Upload and parse a reference document
-
-## Environment Variables
-
-Required environment variables in `backend/.env`:
+### API Keys (`backend/.env`)
 
 ```bash
-OPENAI_API_KEY=         # Your OpenAI API key
-ANTHROPIC_API_KEY=      # Your Anthropic API key
-GOOGLE_API_KEY=         # Your Google API key
-XAI_API_KEY=            # Your xAI API key
+# OpenAI - Format: sk-proj-... or sk-...
+OPENAI_API_KEY=sk-proj-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
+
+# Anthropic Claude - Format: sk-ant-api03-...
+ANTHROPIC_API_KEY=sk-ant-api03-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
+
+# Google Gemini - Format: AIza...
+GOOGLE_API_KEY=AIzaSyAb3dEfGhIjKlMnOpQrStUvWxYz123456
+
+# xAI Grok - Format varies
+XAI_API_KEY=xai-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
 ```
 
-## Troubleshooting
+**Key Format Reference:**
 
-### Providers showing as unavailable
+| Provider | Key Format | Example Prefix |
+|----------|-----------|----------------|
+| OpenAI | `sk-proj-...` or `sk-...` | Modern keys start with `sk-proj-` |
+| Anthropic | `sk-ant-api03-...` | Always starts with `sk-ant-` |
+| Google | `AIza...` | Always starts with `AIza` |
+| xAI | Varies | Check xAI console |
 
-- Check that your API keys are correctly set in the `.env` file
-- Verify the keys don't have `your-` prefix (placeholder values)
-- Restart the backend server after adding/updating keys
+⚠️ **Important:**
+- No quotes around keys
+- No spaces before/after the `=`
+- Copy the entire key including prefix
+- Only add keys for providers you want to use
 
-### CORS errors
+### Server Ports
 
-- Ensure the backend is running on port 8080
-- Check that you're accessing the frontend from a proper HTTP server (not `file://`)
+- Backend: `http://localhost:8001` (default)
+- Frontend: `http://localhost:8080` (configurable)
 
-### Document upload fails
+## 🐛 Troubleshooting
 
-- Verify all document parsing dependencies are installed
-- Check file format is supported (PDF, DOCX, MD, TXT, CSV, HTML, JSON)
-- Ensure file size is reasonable (< 10MB recommended)
+| Problem | Solution |
+|---------|----------|
+| Provider shows "unavailable" | Check API keys in `backend/.env`, restart backend |
+| "Module not found" | Run `pip install -r requirements.txt` |
+| Port already in use | Use different port: `python -m http.server 8081` |
+| CORS errors | Make sure backend is running, use HTTP server (not file://) |
+| Upload fails | Check file format (PDF, DOCX, MD, TXT, CSV, HTML, JSON) |
 
-## Contributing
+**Still stuck?** Open an issue: [GitHub Issues](https://github.com/yourusername/ASHER/issues)
 
-Contributions are welcome! Please feel free to submit pull requests or open issues.
+---
 
-## License
+## 🔐 Privacy & Security
 
-MIT License - feel free to use this project for any purpose.
+- ✅ All data stored locally in your browser
+- ✅ API keys never leave your machine
+- ✅ Conversations saved in localStorage only
+- ✅ No data shared between users
+- ✅ .gitignore prevents accidental data commits
 
-## Credits
+See [DATA_STORAGE.md](DATA_STORAGE.md) for details.
 
-Built with:
-- FastAPI for the backend
-- Vanilla JavaScript for the frontend
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Feel free to:
+- 🐛 Report bugs
+- 💡 Suggest features
+- 🔧 Submit pull requests
+
+---
+
+## 📄 License
+
+MIT License - Free to use for any purpose
+
+---
+
+## 🙏 Credits
+
+**Built with:**
+- [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
+- [jsPDF](https://github.com/parallax/jsPDF) - PDF export
 - OpenAI, Anthropic, Google, and xAI SDKs
+
+**Developed by YT Research**

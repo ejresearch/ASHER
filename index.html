@@ -11,7 +11,7 @@
     <header class="header">
         <div class="header-content">
             <h1>ASHER</h1>
-            <p>AI Testing Lab - Simultaneous Multi-Provider Comparison</p>
+            <p>LLM Testing Platform Developed by YT Research</p>
         </div>
         <div class="theme-toggle">
             <span class="theme-label">Light</span>
@@ -22,11 +22,18 @@
         </div>
     </header>
 
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleConfigPanel()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
     <!-- Main Container -->
     <div class="main-container">
 
         <!-- Configuration Panel (Left Sidebar) -->
-        <aside class="config-panel">
+        <aside class="config-panel" id="config-panel">
             <div class="config-section">
                 <h2>Configuration</h2>
 
@@ -59,6 +66,27 @@
                     </div>
                 </div>
 
+                <!-- Layout Controls -->
+                <div class="config-group">
+                    <label>Layout</label>
+                    <button class="layout-btn" id="layout-toggle" onclick="toggleLayout()">
+                        Switch to 4 Columns
+                    </button>
+                    <div class="sync-scroll-option">
+                        <input type="checkbox" id="sync-scroll" onchange="toggleSyncScroll()">
+                        <label for="sync-scroll" style="margin-bottom: 0;">Sync Scroll All Panels</label>
+                    </div>
+                </div>
+
+                <!-- Conversation History -->
+                <div class="config-group">
+                    <label>Conversation History</label>
+                    <button class="export-btn" onclick="saveCurrentConversation()">💾 Save Current</button>
+                    <div id="saved-conversations" class="saved-conversations-list">
+                        <!-- Saved conversations will appear here -->
+                    </div>
+                </div>
+
                 <!-- Test Controls -->
                 <div class="config-group">
                     <label>Test Controls</label>
@@ -66,6 +94,7 @@
                     <button class="export-btn" onclick="exportResults()">Export JSON</button>
                     <button class="export-btn" onclick="exportAsPlainText()">Export Plain Text</button>
                     <button class="export-btn" onclick="exportAsMarkdown()">Export Markdown</button>
+                    <button class="export-btn" onclick="exportAsPDF()">Export PDF</button>
                 </div>
             </div>
         </aside>
@@ -82,7 +111,6 @@
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="openai-tokens">0 tokens</span>
-                        <span class="stat" id="openai-time">0ms</span>
                     </div>
                 </div>
                 <div class="chat-messages" id="messages-openai">
@@ -101,7 +129,6 @@
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="claude-tokens">0 tokens</span>
-                        <span class="stat" id="claude-time">0ms</span>
                     </div>
                 </div>
                 <div class="chat-messages" id="messages-claude">
@@ -120,7 +147,6 @@
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="gemini-tokens">0 tokens</span>
-                        <span class="stat" id="gemini-time">0ms</span>
                     </div>
                 </div>
                 <div class="chat-messages" id="messages-gemini">
@@ -139,7 +165,6 @@
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="grok-tokens">0 tokens</span>
-                        <span class="stat" id="grok-time">0ms</span>
                     </div>
                 </div>
                 <div class="chat-messages" id="messages-grok">
@@ -195,6 +220,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/app_new.js"></script>
 </body>
 </html>
