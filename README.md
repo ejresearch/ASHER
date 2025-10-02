@@ -7,7 +7,7 @@ Test OpenAI, Claude, Gemini, and Grok simultaneously with the same prompt and se
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 **3 commands to get started:**
 
@@ -35,36 +35,36 @@ python -m http.server 8080
 
 **Open:** http://localhost:8080
 
-📖 **Detailed instructions:** See [INSTALL.md](INSTALL.md)
+**Detailed instructions:** See [INSTALL.md](INSTALL.md)
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core
-- 🚀 **Simultaneous Testing** - Send to 4 providers at once
-- 🔄 **Real-time Comparison** - Side-by-side quad or column layout
-- 📊 **Token Tracking** - Monitor usage per provider
-- 💬 **Conversation History** - Save and reload past conversations
-- 📎 **Reference Documents** - Upload PDFs, DOCX, Markdown, TXT, CSV, HTML, JSON
-- ⚙️ **Context Change Tracking** - Visual indicators when prompts/docs change mid-conversation
+- **Simultaneous Testing** - Send to 4 providers at once
+- **Real-time Comparison** - Side-by-side quad or column layout
+- **Token Tracking** - Monitor usage per provider
+- **Conversation History** - Save and reload past conversations
+- **Reference Documents** - Upload PDFs, DOCX, Markdown, TXT, CSV, HTML, JSON
+- **Context Change Tracking** - Visual indicators when prompts/docs change mid-conversation
 
 ### Export & Data
-- 💾 **Multiple Export Formats** - JSON, Plain Text, Markdown, PDF
-- 🗂️ **Conversation Management** - Save, load, and manage conversation history
-- 📝 **Document Control** - Enable/disable specific reference documents
-- 🔒 **Privacy First** - All data stored locally in browser (never shared)
+- **Multiple Export Formats** - JSON, Plain Text, Markdown, PDF
+- **Conversation Management** - Save, load, and manage conversation history
+- **Document Control** - Enable/disable specific reference documents
+- **Privacy First** - All data stored locally in browser (never shared)
 
 ### Interface
-- 🎨 **Modern Design** - Clean, professional UI
-- 🌓 **Light/Dark Mode** - Apple-style theme toggle
-- 📱 **Responsive Layout** - Works on desktop and tablets
-- ⛶ **Panel Expansion** - Focus on one provider's response
-- 🔄 **Sync Scroll** - Scroll all panels together
+- **Modern Design** - Clean, professional UI
+- **Light/Dark Mode** - Apple-style theme toggle
+- **Responsive Layout** - Works on desktop and tablets
+- **Panel Expansion** - Focus on one provider's response
+- **Sync Scroll** - Scroll all panels together
 
 ---
 
-## 🤖 Supported Models
+## Supported Models
 
 | Provider | Models |
 |----------|--------|
@@ -73,11 +73,11 @@ python -m http.server 8080
 | **Google** | Gemini 2.5 Pro, Gemini 2.5 Flash |
 | **xAI** | Grok 4, Grok 3 |
 
-💡 **Mix and match models** - Configure each provider independently
+**Mix and match models** - Configure each provider independently
 
 ---
 
-## 📋 Requirements
+## Requirements
 
 - **Python 3.8+**
 - **API Keys** (for providers you want to use):
@@ -88,12 +88,12 @@ python -m http.server 8080
 
 ---
 
-## 📖 How to Use
+## How to Use
 
 ### First Time Setup
 
-1. Click the hamburger menu (☰) on the left
-2. Click the gear icon (⚙️) next to each provider you want to use
+1. Click the hamburger menu on the left
+2. Click the gear icon next to each provider you want to use
 3. Enter your API key and select a model
 4. Click "Save"
 
@@ -107,14 +107,14 @@ python -m http.server 8080
 
 ### Pro Tips
 
-- **💾 Save conversations** - Click "Save Current" to keep your chat history
-- **📂 Load conversations** - Click the folder icon to restore a saved conversation
-- **⛶ Expand panels** - Focus on one provider's response
-- **🔄 Sync scroll** - Enable to scroll all panels together
-- **📊 Track changes** - Context changes are marked with ⚙️ indicators
-- **🎨 Theme** - Toggle light/dark mode in the header
+- **Save conversations** - Click "Save Current" to keep your chat history
+- **Load conversations** - Click the folder icon to restore a saved conversation
+- **Expand panels** - Focus on one provider's response
+- **Sync scroll** - Enable to scroll all panels together
+- **Track changes** - Context changes are marked with indicators
+- **Theme** - Toggle light/dark mode in the header
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ASHER/
@@ -130,23 +130,9 @@ ASHER/
 └── DATA_STORAGE.md        # Privacy & data info
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### API Keys (`backend/.env`)
-
-```bash
-# OpenAI - Format: sk-proj-... or sk-...
-OPENAI_API_KEY=sk-proj-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
-
-# Anthropic Claude - Format: sk-ant-api03-...
-ANTHROPIC_API_KEY=sk-ant-api03-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
-
-# Google Gemini - Format: AIza...
-GOOGLE_API_KEY=AIzaSyAb3dEfGhIjKlMnOpQrStUvWxYz123456
-
-# xAI Grok - Format varies
-XAI_API_KEY=xai-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
-```
 
 **Key Format Reference:**
 
@@ -157,7 +143,7 @@ XAI_API_KEY=xai-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
 | Google | `AIza...` | Always starts with `AIza` |
 | xAI | Varies | Check xAI console |
 
-⚠️ **Important:**
+**Important:**
 - No quotes around keys
 - No spaces before/after the `=`
 - Copy the entire key including prefix
@@ -168,7 +154,7 @@ XAI_API_KEY=xai-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
 - Backend: `http://localhost:8001` (default)
 - Frontend: `http://localhost:8080` (configurable)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
@@ -182,34 +168,34 @@ XAI_API_KEY=xai-Ab3dEfGhIjKlMnOpQrStUvWxYz1234567890
 
 ---
 
-## 🔐 Privacy & Security
+## Privacy & Security
 
-- ✅ All data stored locally in your browser
-- ✅ API keys never leave your machine
-- ✅ Conversations saved in localStorage only
-- ✅ No data shared between users
-- ✅ .gitignore prevents accidental data commits
+- All data stored locally in your browser
+- API keys never leave your machine
+- Conversations saved in localStorage only
+- No data shared between users
+- .gitignore prevents accidental data commits
 
 See [DATA_STORAGE.md](DATA_STORAGE.md) for details.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Feel free to:
-- 🐛 Report bugs
-- 💡 Suggest features
-- 🔧 Submit pull requests
+- Report bugs
+- Suggest features
+- Submit pull requests
 
 ---
 
-## 📄 License
+## License
 
 MIT License - Free to use for any purpose
 
 ---
 
-## 🙏 Credits
+## Credits
 
 **Built with:**
 - [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
