@@ -2,16 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ASHER - AI Provider A/B/C/D Testing</title>
-    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007aff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ASHER">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <link rel="stylesheet" href="css/styles.css?v=12">
+    <link rel="stylesheet" href="css/mobile.css?v=12">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <h1>ASHER</h1>
-            <p>LLM Testing Platform Developed by YT Research</p>
+            <p>Easily customize prompts and test four LLMs to see what works best.</p>
         </div>
         <div class="theme-toggle">
             <span class="theme-label">Light</span>
@@ -20,6 +30,12 @@
             </div>
             <span class="theme-label">Dark</span>
         </div>
+        <button class="shortcuts-hint-btn" onclick="showKeyboardShortcuts()" title="Keyboard shortcuts">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h8M6 16h12"/>
+            </svg>
+        </button>
     </header>
 
     <!-- Hamburger Menu Button -->
@@ -39,17 +55,17 @@
 
                 <!-- System Prompt -->
                 <div class="config-group">
-                    <label>System Prompt</label>
-                    <textarea id="system-prompt" rows="8" placeholder="Enter system instructions for all AI providers...">You are a helpful AI assistant. Provide clear, accurate, and concise responses.</textarea>
+                    <label><span class="label-icon">💬</span>System Prompt</label>
+                    <textarea id="system-prompt" rows="4" placeholder="Enter system instructions...">You are a helpful AI assistant. Provide clear, accurate, and concise responses.</textarea>
                 </div>
 
                 <!-- Reference Documents -->
                 <div class="config-group">
-                    <label>Reference Documents</label>
+                    <label><span class="label-icon">📄</span>Reference Documents</label>
                     <div class="reference-docs-header">
                         <span class="ref-count" id="ref-count">0 documents</span>
                         <div class="doc-buttons">
-                            <button class="add-doc-btn" onclick="uploadDocument()">📎 Upload</button>
+                            <button class="add-doc-btn" onclick="uploadDocument()">Upload</button>
                             <button class="add-doc-btn" onclick="addReferenceDocument()">+ Text</button>
                         </div>
                     </div>
@@ -60,15 +76,156 @@
 
                 <!-- Provider Selection with Status -->
                 <div class="config-group">
-                    <label>Providers</label>
-                    <div id="provider-status" class="provider-status-list">
-                        <div class="status-loading">Loading providers...</div>
+                    <label><span class="label-icon">🤖</span>Providers</label>
+                    <div id="provider-accordion" class="provider-accordion">
+                        <!-- OpenAI -->
+                        <div class="provider-item" data-provider="openai">
+                            <div class="provider-header" onclick="toggleProviderConfig('openai')">
+                                <div class="provider-header-left">
+                                    <input type="checkbox" id="openai-enabled" onchange="toggleProvider('openai', this.checked)">
+                                    <span class="provider-name">OpenAI</span>
+                                </div>
+                                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="provider-config" id="openai-config">
+                                <div class="config-field">
+                                    <label>Model</label>
+                                    <select id="openai-model" class="model-select">
+                                        <option value="gpt-5">GPT-5</option>
+                                        <option value="gpt-5-mini">GPT-5 Mini</option>
+                                        <option value="gpt-4.1">GPT-4.1</option>
+                                        <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
+                                        <option value="o3-mini">o3-mini (Reasoning)</option>
+                                        <option value="gpt-4o">GPT-4o</option>
+                                        <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                    </select>
+                                </div>
+                                <div class="config-field">
+                                    <label>Temperature</label>
+                                    <input type="range" id="openai-temp" min="0" max="2" step="0.1" value="1.0" oninput="updateTempDisplay('openai', this.value)">
+                                    <span class="temp-display" id="openai-temp-display">1.0</span>
+                                </div>
+                                <div class="config-field">
+                                    <label>API Key</label>
+                                    <input type="password" id="openai-key" placeholder="sk-..." class="api-key-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Claude -->
+                        <div class="provider-item" data-provider="claude">
+                            <div class="provider-header" onclick="toggleProviderConfig('claude')">
+                                <div class="provider-header-left">
+                                    <input type="checkbox" id="claude-enabled" onchange="toggleProvider('claude', this.checked)">
+                                    <span class="provider-name">Claude</span>
+                                </div>
+                                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="provider-config" id="claude-config">
+                                <div class="config-field">
+                                    <label>Model</label>
+                                    <select id="claude-model" class="model-select">
+                                        <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
+                                        <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+                                        <option value="claude-opus-4.1">Claude Opus 4.1</option>
+                                        <option value="claude-opus-4">Claude Opus 4</option>
+                                        <option value="claude-sonnet-4">Claude Sonnet 4</option>
+                                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                        <option value="claude-3-opus">Claude 3 Opus</option>
+                                        <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                    </select>
+                                </div>
+                                <div class="config-field">
+                                    <label>Temperature</label>
+                                    <input type="range" id="claude-temp" min="0" max="1" step="0.1" value="1.0" oninput="updateTempDisplay('claude', this.value)">
+                                    <span class="temp-display" id="claude-temp-display">1.0</span>
+                                </div>
+                                <div class="config-field">
+                                    <label>API Key</label>
+                                    <input type="password" id="claude-key" placeholder="sk-ant-..." class="api-key-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gemini -->
+                        <div class="provider-item" data-provider="gemini">
+                            <div class="provider-header" onclick="toggleProviderConfig('gemini')">
+                                <div class="provider-header-left">
+                                    <input type="checkbox" id="gemini-enabled" onchange="toggleProvider('gemini', this.checked)">
+                                    <span class="provider-name">Gemini</span>
+                                </div>
+                                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="provider-config" id="gemini-config">
+                                <div class="config-field">
+                                    <label>Model</label>
+                                    <select id="gemini-model" class="model-select">
+                                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+                                    </select>
+                                </div>
+                                <div class="config-field">
+                                    <label>Temperature</label>
+                                    <input type="range" id="gemini-temp" min="0" max="2" step="0.1" value="1.0" oninput="updateTempDisplay('gemini', this.value)">
+                                    <span class="temp-display" id="gemini-temp-display">1.0</span>
+                                </div>
+                                <div class="config-field">
+                                    <label>API Key</label>
+                                    <input type="password" id="gemini-key" placeholder="AIza..." class="api-key-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grok -->
+                        <div class="provider-item" data-provider="grok">
+                            <div class="provider-header" onclick="toggleProviderConfig('grok')">
+                                <div class="provider-header-left">
+                                    <input type="checkbox" id="grok-enabled" onchange="toggleProvider('grok', this.checked)">
+                                    <span class="provider-name">Grok</span>
+                                </div>
+                                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="provider-config" id="grok-config">
+                                <div class="config-field">
+                                    <label>Model</label>
+                                    <select id="grok-model" class="model-select">
+                                        <option value="grok-4">Grok 4</option>
+                                        <option value="grok-4-fast">Grok 4 Fast</option>
+                                        <option value="grok-4-heavy">Grok 4 Heavy</option>
+                                        <option value="grok-3-beta">Grok 3</option>
+                                        <option value="grok-3-mini-beta">Grok 3 Mini</option>
+                                        <option value="grok-2-1212">Grok 2</option>
+                                        <option value="grok-code-fast-1">Grok Code Fast (Reasoning)</option>
+                                    </select>
+                                </div>
+                                <div class="config-field">
+                                    <label>Temperature</label>
+                                    <input type="range" id="grok-temp" min="0" max="2" step="0.1" value="1.0" oninput="updateTempDisplay('grok', this.value)">
+                                    <span class="temp-display" id="grok-temp-display">1.0</span>
+                                </div>
+                                <div class="config-field">
+                                    <label>API Key</label>
+                                    <input type="password" id="grok-key" placeholder="xai-..." class="api-key-input">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Layout Controls -->
                 <div class="config-group">
-                    <label>Layout</label>
+                    <label><span class="label-icon">📐</span>Layout</label>
                     <button class="layout-btn" id="layout-toggle" onclick="toggleLayout()">
                         Switch to 4 Columns
                     </button>
@@ -80,8 +237,8 @@
 
                 <!-- Conversation History -->
                 <div class="config-group">
-                    <label>Conversation History</label>
-                    <button class="export-btn" onclick="saveCurrentConversation()">💾 Save Current</button>
+                    <label><span class="label-icon">💾</span>Conversation History</label>
+                    <button class="export-btn" onclick="saveCurrentConversation()">Save Current</button>
                     <div id="saved-conversations" class="saved-conversations-list">
                         <!-- Saved conversations will appear here -->
                     </div>
@@ -89,25 +246,32 @@
 
                 <!-- Test Controls -->
                 <div class="config-group">
-                    <label>Test Controls</label>
+                    <label><span class="label-icon">⚡</span>Test Controls</label>
                     <button class="clear-all-btn" onclick="clearAllChats()">Clear All Chats</button>
-                    <button class="export-btn" onclick="exportResults()">Export JSON</button>
-                    <button class="export-btn" onclick="exportAsPlainText()">Export Plain Text</button>
-                    <button class="export-btn" onclick="exportAsMarkdown()">Export Markdown</button>
-                    <button class="export-btn" onclick="exportAsPDF()">Export PDF</button>
+                    <select class="export-select" onchange="handleExport(this.value); this.value='';">
+                        <option value="">Export...</option>
+                        <option value="json">JSON</option>
+                        <option value="text">Plain Text</option>
+                        <option value="markdown">Markdown</option>
+                        <option value="pdf">PDF</option>
+                    </select>
                 </div>
             </div>
         </aside>
 
         <!-- Chat Grid (4 Panels) -->
-        <main class="chat-grid">
+        <main class="chat-grid" id="chat-grid-container">
 
             <!-- OpenAI Panel -->
             <div class="chat-panel" id="panel-openai">
                 <div class="panel-header">
                     <div class="panel-header-left">
                         <div class="provider-badge openai">OpenAI GPT-4.1</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-openai')" title="Expand/Collapse">⛶</button>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-openai')" title="Expand/Collapse">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="openai-tokens">0 tokens</span>
@@ -125,7 +289,11 @@
                 <div class="panel-header">
                     <div class="panel-header-left">
                         <div class="provider-badge claude">Claude Sonnet 4.5</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-claude')" title="Expand/Collapse">⛶</button>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-claude')" title="Expand/Collapse">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="claude-tokens">0 tokens</span>
@@ -143,7 +311,11 @@
                 <div class="panel-header">
                     <div class="panel-header-left">
                         <div class="provider-badge gemini">Gemini 2.5 Flash</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-gemini')" title="Expand/Collapse">⛶</button>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-gemini')" title="Expand/Collapse">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="gemini-tokens">0 tokens</span>
@@ -161,7 +333,11 @@
                 <div class="panel-header">
                     <div class="panel-header-left">
                         <div class="provider-badge grok">xAI Grok 4</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-grok')" title="Expand/Collapse">⛶</button>
+                        <button class="expand-btn" onclick="togglePanelExpand('panel-grok')" title="Expand/Collapse">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="grok-tokens">0 tokens</span>
@@ -183,7 +359,7 @@
             <textarea
                 id="test-message"
                 rows="2"
-                placeholder="Type your test message here... (it will be sent to all active providers simultaneously)"
+                placeholder="What do you want to test today? Your message will be sent to all selected providers..."
             ></textarea>
             <button class="send-all-btn" onclick="sendToAllProviders()" id="send-btn">
                 Send to All Providers
@@ -222,5 +398,20 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/app_new.js"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('ASHER PWA: Service Worker registered', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ASHER PWA: Service Worker registration failed', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

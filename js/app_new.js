@@ -1,7 +1,10 @@
 // ASHER - AI Provider Testing Lab
 // Simultaneous A/B/C/D Testing
 
-const API_BASE = 'http://localhost:8001';
+// API Configuration - Backend runs on port 8001
+const API_BASE = window.location.port === '8888'
+    ? 'http://localhost:8001'  // When frontend is on dev server
+    : window.location.origin;   // When served from backend directly
 
 // Theme Management - Apple Style Toggle
 function toggleTheme() {
@@ -147,21 +150,280 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConfigPanelState();
     loadReferenceDocuments();
     loadSavedConversations();
+    showOnboardingIfNeeded();
 });
 
-// Setup Enter key handler for textarea
+// Show onboarding banner for first-time users
+function showOnboardingIfNeeded() {
+    const hasSeenOnboarding = localStorage.getItem('asher-onboarding-seen');
+
+    if (!hasSeenOnboarding) {
+        const chatGrid = document.getElementById('chat-grid-container');
+        const banner = document.createElement('div');
+        banner.className = 'onboarding-banner';
+        banner.id = 'onboarding-banner';
+        banner.innerHTML = `
+            <div class="onboarding-content">
+                <div class="onboarding-text">
+                    <div class="onboarding-title">Welcome to ASHER</div>
+                    <div class="onboarding-description">Click the menu to configure providers, then type a prompt below to compare AI responses side-by-side</div>
+                </div>
+            </div>
+            <button class="onboarding-close" onclick="dismissOnboarding()">Close</button>
+        `;
+
+        chatGrid.parentElement.insertBefore(banner, chatGrid);
+
+        // Add subtle pulse to hamburger menu
+        const hamburger = document.getElementById('hamburger-btn');
+        if (hamburger) {
+            setTimeout(() => {
+                hamburger.classList.add('hint-pulse');
+                setTimeout(() => {
+                    hamburger.classList.remove('hint-pulse');
+                }, 6000); // 3 pulses × 2s
+            }, 1000);
+        }
+    }
+}
+
+function dismissOnboarding() {
+    const banner = document.getElementById('onboarding-banner');
+    if (banner) {
+        banner.style.animation = 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        setTimeout(() => {
+            banner.remove();
+        }, 300);
+    }
+    localStorage.setItem('asher-onboarding-seen', 'true');
+}
+
+// Setup keyboard shortcuts
 function setupEnterKeyHandler() {
     const textarea = document.getElementById('test-message');
+
+    // Enter to send
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendToAllProviders();
         }
     });
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl + Enter: Send to all providers (from anywhere)
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            sendToAllProviders();
+        }
+
+        // Cmd/Ctrl + K: Focus input
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            textarea.focus();
+        }
+
+        // Cmd/Ctrl + C: Copy last response (when not selecting text)
+        if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !window.getSelection().toString()) {
+            const lastResponse = document.querySelector('.message-bubble.assistant:last-of-type .message-content');
+            if (lastResponse) {
+                e.preventDefault();
+                copyToClipboard(lastResponse.textContent);
+                showToast('Last response copied!');
+            }
+        }
+
+        // Escape: Toggle sidebar (open/close)
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            toggleConfigPanel();
+        }
+
+        // Cmd/Ctrl + /: Show keyboard shortcuts help
+        if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+            e.preventDefault();
+            showKeyboardShortcuts();
+        }
+    });
+}
+
+// Toast notification helper
+function showToast(message, duration = 2000) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// Copy to clipboard helper
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// Show keyboard shortcuts modal
+function showKeyboardShortcuts() {
+    const modal = document.createElement('div');
+    modal.className = 'shortcuts-modal';
+    modal.innerHTML = `
+        <div class="shortcuts-content">
+            <div class="shortcuts-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button onclick="this.closest('.shortcuts-modal').remove()">Close</button>
+            </div>
+            <div class="shortcuts-list">
+                <div class="shortcut-item">
+                    <kbd>⌘ Enter</kbd>
+                    <span>Send to all providers</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>⌘ K</kbd>
+                    <span>Focus input</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>⌘ C</kbd>
+                    <span>Copy last response</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Escape</kbd>
+                    <span>Toggle sidebar</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>⌘ /</kbd>
+                    <span>Show this help</span>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
 }
 
 // State for API key modal
 let currentProviderId = null;
+
+// Toggle provider checkbox visual feedback
+function toggleProviderCheckbox(checkboxId) {
+    const checkbox = document.getElementById(checkboxId);
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        toggleProviderVisual(checkbox);
+    }
+}
+
+function toggleProviderVisual(checkbox) {
+    const parentDiv = checkbox.closest('.provider-checkbox');
+    if (parentDiv) {
+        if (checkbox.checked) {
+            parentDiv.classList.add('checked');
+        } else {
+            parentDiv.classList.remove('checked');
+        }
+    }
+
+    // Update panel active state
+    const panelMap = {
+        'provider-openai': 'panel-openai',
+        'provider-claude': 'panel-claude',
+        'provider-gemini': 'panel-gemini',
+        'provider-grok': 'panel-grok'
+    };
+
+    const panelId = panelMap[checkbox.id];
+    if (panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            if (checkbox.checked) {
+                panel.classList.add('provider-active');
+            } else {
+                panel.classList.remove('provider-active');
+            }
+        }
+    }
+
+    // Update panel visibility hint
+    updateSelectedProvidersCount();
+}
+
+function updateSelectedProvidersCount() {
+    const selected = getActiveProviders();
+    const sendBtn = document.getElementById('send-btn');
+
+    if (selected.length === 0) {
+        sendBtn.textContent = 'Select providers first';
+        sendBtn.disabled = true;
+    } else {
+        sendBtn.textContent = `Send to ${selected.length} Provider${selected.length > 1 ? 's' : ''}`;
+        sendBtn.disabled = false;
+    }
+
+    // Update smart layout
+    updateSmartLayout();
+}
+
+// Smart auto-hide and layout adjustment
+function updateSmartLayout() {
+    const chatGrid = document.querySelector('.chat-grid');
+    if (!chatGrid) return;
+
+    const panels = document.querySelectorAll('.chat-panel');
+    const activePanels = document.querySelectorAll('.chat-panel.provider-active');
+    const activeCount = activePanels.length;
+
+    // Remove all active-* classes
+    chatGrid.classList.remove('active-1', 'active-2', 'active-3', 'active-4');
+
+    // Add class based on active count
+    if (activeCount > 0) {
+        chatGrid.classList.add(`active-${activeCount}`);
+    }
+
+    // Auto-hide inactive panels
+    panels.forEach(panel => {
+        if (!panel.classList.contains('provider-active') && !panel.classList.contains('expanded')) {
+            panel.classList.add('auto-hidden');
+        } else {
+            panel.classList.remove('auto-hidden');
+        }
+    });
+}
+
+// Initialize panel active states based on checkboxes
+function initializePanelStates() {
+    const panelMap = {
+        'provider-openai': 'panel-openai',
+        'provider-claude': 'panel-claude',
+        'provider-gemini': 'panel-gemini',
+        'provider-grok': 'panel-grok'
+    };
+
+    Object.keys(panelMap).forEach(checkboxId => {
+        const checkbox = document.getElementById(checkboxId);
+        const panel = document.getElementById(panelMap[checkboxId]);
+
+        if (checkbox && panel) {
+            if (checkbox.checked) {
+                panel.classList.add('provider-active');
+            } else {
+                panel.classList.remove('provider-active');
+            }
+        }
+    });
+
+    // Update smart layout after initializing
+    updateSmartLayout();
+}
 const API_KEY_MAP = {
     'openai-gpt4.1': 'OPENAI_API_KEY',
     'claude-sonnet-4.5': 'ANTHROPIC_API_KEY',
@@ -190,12 +452,17 @@ async function loadProviderStatus() {
             if (provider) {
                 const statusClass = provider.available ? 'available' : 'unavailable';
                 const statusText = provider.available ? '✓' : '✗';
+                const checkedClass = provider.available ? 'checked' : '';
 
                 html += `
-                    <div class="provider-checkbox">
-                        <input type="checkbox" id="${checkboxId}" value="${id}" ${provider.available ? 'checked' : ''}>
+                    <div class="provider-checkbox ${checkedClass}" onclick="toggleProviderCheckbox('${checkboxId}')">
+                        <input type="checkbox" id="${checkboxId}" value="${id}" ${provider.available ? 'checked' : ''} onclick="event.stopPropagation(); toggleProviderVisual(this);">
                         <span class="provider-name">${provider.name}</span>
-                        <button class="config-icon" onclick="openApiKeyModal('${id}')" title="Configure API Key">⚙️</button>
+                        <button class="config-icon" onclick="event.stopPropagation(); openApiKeyModal('${id}')" title="Configure API Key">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"/>
+                            </svg>
+                        </button>
                         <span class="status-badge ${statusClass}">${statusText}</span>
                     </div>
                 `;
@@ -204,9 +471,13 @@ async function loadProviderStatus() {
 
         statusContainer.innerHTML = html || '<div class="status-loading">No providers available</div>';
 
+        // Initialize button state and panel visibility
+        updateSelectedProvidersCount();
+        initializePanelStates();
+
     } catch (error) {
         console.error('Error loading provider status:', error);
-        statusContainer.innerHTML = '<div class="status-loading">Error loading status</div>';
+        statusContainer.innerHTML = '<div class="status-loading">⚠️ Error loading providers. Check your connection.</div>';
     }
 }
 
@@ -392,7 +663,9 @@ function loadConversation(conversationId) {
         if (conversationHistory[providerId].length === 0) {
             messagesContainer.innerHTML = `
                 <div class="empty-state">
-                    <p>💬 ${provider.name} responses will appear here</p>
+                    <div class="empty-state-icon">💬</div>
+                    <div class="empty-state-title">Ready to test</div>
+                    <div class="empty-state-description">Send a prompt below to see ${provider.name} responses here</div>
                 </div>
             `;
         }
@@ -729,7 +1002,6 @@ function addContextChangeIndicator(providerId, message) {
     indicatorDiv.className = 'context-change-indicator';
     indicatorDiv.innerHTML = `
         <div class="context-change-content">
-            <span class="context-change-icon">⚙️</span>
             <span class="context-change-text">${message}</span>
         </div>
     `;
@@ -759,12 +1031,114 @@ function addMessage(providerId, role, content, isError = false) {
     contentDiv.textContent = content;
 
     messageDiv.appendChild(contentDiv);
+
+    // Add action buttons for assistant messages
+    if (role === 'assistant' && !isError) {
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'message-actions';
+
+        // Star/Mark as best button
+        const starBtn = document.createElement('button');
+        starBtn.className = 'action-btn star-btn';
+        starBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        starBtn.title = 'Mark as best';
+        starBtn.onclick = () => toggleStar(messageDiv, starBtn, providerId);
+        actionsDiv.appendChild(starBtn);
+
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn copy-btn';
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        copyBtn.title = 'Copy response';
+        copyBtn.onclick = () => copyMessageQuick(content, copyBtn);
+        actionsDiv.appendChild(copyBtn);
+
+        // Regenerate button
+        const regenBtn = document.createElement('button');
+        regenBtn.className = 'action-btn regen-btn';
+        regenBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+        regenBtn.title = 'Regenerate';
+        regenBtn.onclick = () => regenerateResponse(providerId);
+        actionsDiv.appendChild(regenBtn);
+
+        messageDiv.appendChild(actionsDiv);
+    }
+
     messagesContainer.appendChild(messageDiv);
 
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     return messageDiv;
+}
+
+// Copy message content to clipboard (quick action)
+function copyMessageQuick(content, button) {
+    navigator.clipboard.writeText(content).then(() => {
+        button.innerHTML = '✓';
+        button.classList.add('copied');
+        showToast('Response copied!');
+
+        setTimeout(() => {
+            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        button.innerHTML = '✗';
+        showToast('Failed to copy', 1500);
+        setTimeout(() => {
+            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        }, 2000);
+    });
+}
+
+// Toggle star/mark as best
+function toggleStar(messageDiv, button, providerId) {
+    const wasStarred = button.classList.contains('starred');
+
+    // Remove all stars from this panel
+    const panel = messageDiv.closest('.chat-panel');
+    panel.querySelectorAll('.star-btn.starred').forEach(btn => {
+        btn.classList.remove('starred');
+    });
+
+    // Toggle this star
+    if (!wasStarred) {
+        button.classList.add('starred');
+        messageDiv.classList.add('starred-message');
+        showToast('Marked as best response!');
+    } else {
+        messageDiv.classList.remove('starred-message');
+    }
+}
+
+// Regenerate last response
+function regenerateResponse(providerId) {
+    const history = conversationHistory[providerId];
+    if (history.length < 2) {
+        showToast('Nothing to regenerate', 1500);
+        return;
+    }
+
+    // Remove last assistant message
+    history.pop();
+
+    // Get last user message
+    const lastUserMsg = history[history.length - 1];
+    if (!lastUserMsg || lastUserMsg.role !== 'user') {
+        showToast('No user message found', 1500);
+        return;
+    }
+
+    // Resend to provider
+    showToast('Regenerating response...');
+    sendToProvider(providerId, lastUserMsg.content);
+}
+
+// Copy message content to clipboard (old function for compatibility)
+function copyMessage(content, button) {
+    copyMessageQuick(content, button);
 }
 
 // Add loading indicator
@@ -807,18 +1181,30 @@ async function sendToProvider(providerId, message, systemContext) {
     const startTime = Date.now();
     const loadingIndicator = addLoadingIndicator(providerId);
 
+    // Get provider-specific configuration
+    const model = document.getElementById(`${providerId}-model`)?.value;
+    const temperature = parseFloat(document.getElementById(`${providerId}-temp`)?.value || '1.0');
+    const apiKey = document.getElementById(`${providerId}-key`)?.value;
+
     try {
+        const requestBody = {
+            provider: providerId,
+            message: message,
+            system_prompt: systemContext,
+            conversation_history: conversationHistory[providerId] || []
+        };
+
+        // Add optional parameters if set
+        if (model) requestBody.model = model;
+        if (temperature !== undefined) requestBody.temperature = temperature;
+        if (apiKey) requestBody.api_key = apiKey;
+
         const response = await fetch(`${API_BASE}/asher/test`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                provider: providerId,
-                message: message,
-                system_prompt: systemContext,
-                conversation_history: conversationHistory[providerId] || []
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -943,7 +1329,9 @@ function clearAllChats() {
         const messagesContainer = document.getElementById(provider.messagesId);
         messagesContainer.innerHTML = `
             <div class="empty-state">
-                <p>💬 ${provider.name} responses will appear here</p>
+                <div class="empty-state-icon">💬</div>
+                <div class="empty-state-title">Ready to test</div>
+                <div class="empty-state-description">Type your prompt below and send it to compare responses</div>
             </div>
         `;
 
@@ -1062,14 +1450,135 @@ function toggleConfigPanel() {
     localStorage.setItem('asher-config-panel', isConfigPanelOpen);
 }
 
+// Provider Accordion Functions
+function toggleProviderConfig(providerId) {
+    const providerItem = document.querySelector(`.provider-item[data-provider="${providerId}"]`);
+    const isExpanded = providerItem.classList.contains('expanded');
+
+    // Close all other providers
+    document.querySelectorAll('.provider-item').forEach(item => {
+        if (item.getAttribute('data-provider') !== providerId) {
+            item.classList.remove('expanded');
+        }
+    });
+
+    // Toggle current provider
+    if (isExpanded) {
+        providerItem.classList.remove('expanded');
+    } else {
+        providerItem.classList.add('expanded');
+    }
+}
+
+function toggleProvider(providerId, enabled) {
+    const panel = document.getElementById(`panel-${providerId}`);
+
+    if (enabled) {
+        panel.classList.add('provider-active');
+        enabledProviders.add(providerId);
+    } else {
+        panel.classList.remove('provider-active');
+        enabledProviders.delete(providerId);
+    }
+
+    // Update visibility based on layout
+    updatePanelVisibility();
+
+    // Save to localStorage
+    localStorage.setItem(`provider-${providerId}-enabled`, enabled);
+}
+
+function updateTempDisplay(providerId, value) {
+    const display = document.getElementById(`${providerId}-temp-display`);
+    if (display) {
+        display.textContent = parseFloat(value).toFixed(1);
+    }
+}
+
+// Load saved provider configurations
+function loadProviderConfigs() {
+    const providers = ['openai', 'claude', 'gemini', 'grok'];
+
+    providers.forEach(provider => {
+        // Load enabled state
+        const enabled = localStorage.getItem(`provider-${provider}-enabled`) === 'true';
+        const checkbox = document.getElementById(`${provider}-enabled`);
+        if (checkbox) {
+            checkbox.checked = enabled;
+            toggleProvider(provider, enabled);
+        }
+
+        // Load model selection
+        const savedModel = localStorage.getItem(`provider-${provider}-model`);
+        const modelSelect = document.getElementById(`${provider}-model`);
+        if (savedModel && modelSelect) {
+            modelSelect.value = savedModel;
+        }
+
+        // Load temperature
+        const savedTemp = localStorage.getItem(`provider-${provider}-temp`);
+        const tempInput = document.getElementById(`${provider}-temp`);
+        if (savedTemp && tempInput) {
+            tempInput.value = savedTemp;
+            updateTempDisplay(provider, savedTemp);
+        }
+
+        // Load API key
+        const savedKey = localStorage.getItem(`provider-${provider}-key`);
+        const keyInput = document.getElementById(`${provider}-key`);
+        if (savedKey && keyInput) {
+            keyInput.value = savedKey;
+        }
+    });
+}
+
+// Save provider configuration when changed
+function saveProviderConfig(providerId, field, value) {
+    localStorage.setItem(`provider-${providerId}-${field}`, value);
+}
+
+// Add event listeners for saving configs
+document.addEventListener('DOMContentLoaded', () => {
+    const providers = ['openai', 'claude', 'gemini', 'grok'];
+
+    providers.forEach(provider => {
+        // Model select
+        const modelSelect = document.getElementById(`${provider}-model`);
+        if (modelSelect) {
+            modelSelect.addEventListener('change', (e) => {
+                saveProviderConfig(provider, 'model', e.target.value);
+            });
+        }
+
+        // Temperature slider
+        const tempInput = document.getElementById(`${provider}-temp`);
+        if (tempInput) {
+            tempInput.addEventListener('change', (e) => {
+                saveProviderConfig(provider, 'temp', e.target.value);
+            });
+        }
+
+        // API key
+        const keyInput = document.getElementById(`${provider}-key`);
+        if (keyInput) {
+            keyInput.addEventListener('blur', (e) => {
+                saveProviderConfig(provider, 'key', e.target.value);
+            });
+        }
+    });
+
+    // Load saved configurations
+    loadProviderConfigs();
+});
+
 // Load saved config panel state
 function loadConfigPanelState() {
     const savedState = localStorage.getItem('asher-config-panel');
     const panel = document.getElementById('config-panel');
     const hamburger = document.getElementById('hamburger-btn');
 
-    // Default to open if no saved state
-    if (savedState === null || savedState === 'true') {
+    // Default to CLOSED on first visit for cleaner UX
+    if (savedState === 'true') {
         isConfigPanelOpen = true;
         panel.classList.remove('closed');
         hamburger.classList.add('active');
@@ -1080,8 +1589,51 @@ function loadConfigPanelState() {
     }
 }
 
-// Export results as JSON
+// Export results with comparison options
+// Handle export dropdown selection
+function handleExport(format) {
+    if (!format) return;
+
+    switch(format) {
+        case 'json':
+            exportResults();
+            break;
+        case 'text':
+            exportAsPlainText();
+            break;
+        case 'markdown':
+            exportAsMarkdown();
+            break;
+        case 'pdf':
+            exportAsPDF();
+            break;
+    }
+}
+
 function exportResults() {
+    // Ask user what format they want
+    const format = prompt('Export format:\n1. JSON (detailed)\n2. Markdown Table (comparison)\n3. Both\n\nEnter 1, 2, or 3:', '3');
+
+    if (!format || !['1', '2', '3'].includes(format)) {
+        return;
+    }
+
+    const systemPrompt = document.getElementById('system-prompt').value;
+    const activeProviders = getActiveProviders();
+
+    if (format === '1' || format === '3') {
+        exportJSON();
+    }
+
+    if (format === '2' || format === '3') {
+        exportMarkdownTable();
+    }
+
+    showToast('Export complete!');
+}
+
+// Export as JSON
+function exportJSON() {
     const systemPrompt = document.getElementById('system-prompt').value;
     const activeProviders = getActiveProviders();
 
@@ -1118,6 +1670,94 @@ function exportResults() {
     URL.revokeObjectURL(url);
 
     console.log('📥 JSON exported');
+}
+
+// Export as Markdown comparison table
+function exportMarkdownTable() {
+    const systemPrompt = document.getElementById('system-prompt').value;
+    const activeProviders = getActiveProviders();
+
+    let markdown = `# ASHER A/B/C/D Test Results\n\n`;
+    markdown += `**Date:** ${new Date().toLocaleString()}\n\n`;
+
+    if (systemPrompt) {
+        markdown += `## System Prompt\n\`\`\`\n${systemPrompt}\n\`\`\`\n\n`;
+    }
+
+    // Build comparison table
+    markdown += `## Response Comparison\n\n`;
+    markdown += `| Prompt | ${activeProviders.map(p => PROVIDER_MAP[p].name).join(' | ')} |\n`;
+    markdown += `|--------|${activeProviders.map(() => '--------').join('|')}|\n`;
+
+    // Get all unique user prompts
+    const allPrompts = new Set();
+    activeProviders.forEach(providerId => {
+        conversationHistory[providerId]?.forEach(msg => {
+            if (msg.role === 'user') {
+                allPrompts.add(msg.content);
+            }
+        });
+    });
+
+    // For each prompt, show responses from all providers
+    allPrompts.forEach(prompt => {
+        const responses = activeProviders.map(providerId => {
+            const history = conversationHistory[providerId] || [];
+            const userMsgIndex = history.findIndex(m => m.role === 'user' && m.content === prompt);
+            if (userMsgIndex !== -1 && userMsgIndex + 1 < history.length) {
+                const response = history[userMsgIndex + 1].content;
+                // Truncate and escape for table
+                return response.substring(0, 200).replace(/\|/g, '\\|').replace(/\n/g, '<br>') + (response.length > 200 ? '...' : '');
+            }
+            return '_No response_';
+        });
+
+        const truncatedPrompt = prompt.substring(0, 100).replace(/\|/g, '\\|').replace(/\n/g, '<br>') + (prompt.length > 100 ? '...' : '');
+        markdown += `| ${truncatedPrompt} | ${responses.join(' | ')} |\n`;
+    });
+
+    // Add stats
+    markdown += `\n## Statistics\n\n`;
+    markdown += `| Provider | Messages | Avg Response Time |\n`;
+    markdown += `|----------|----------|-------------------|\n`;
+
+    activeProviders.forEach(providerId => {
+        const provider = PROVIDER_MAP[providerId];
+        const messageCount = conversationHistory[providerId]?.filter(m => m.role === 'assistant').length || 0;
+        const events = conversationEvents[providerId] || [];
+        const responseTimes = events.filter(e => e.type === 'response_time').map(e => e.duration);
+        const avgTime = responseTimes.length > 0
+            ? (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length / 1000).toFixed(2)
+            : 'N/A';
+
+        markdown += `| ${provider.name} | ${messageCount} | ${avgTime}s |\n`;
+    });
+
+    // Add winner if any message is starred
+    const starredMessages = document.querySelectorAll('.starred-message');
+    if (starredMessages.length > 0) {
+        markdown += `\n## Best Responses\n\n`;
+        starredMessages.forEach(msg => {
+            const panel = msg.closest('.chat-panel');
+            const panelId = panel.id.replace('panel-', '');
+            const provider = Object.values(PROVIDER_MAP).find(p => p.messagesId.includes(panelId));
+            const content = msg.querySelector('.message-content').textContent;
+            markdown += `### BEST: ${provider?.name || 'Unknown'}\n\`\`\`\n${content.substring(0, 500)}${content.length > 500 ? '...' : ''}\n\`\`\`\n\n`;
+        });
+    }
+
+    // Download
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `asher-comparison-${Date.now()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log('📥 Markdown comparison exported');
 }
 
 // Export as plain text
@@ -1224,7 +1864,7 @@ function exportAsMarkdown() {
                     }
                     md += `---\n\n`;
                 } else if (item.type === 'event') {
-                    md += `> ⚙️ **Context Change** (${new Date(item.data.timestamp).toLocaleString()}): ${item.data.message}\n\n`;
+                    md += `> **Context Change** (${new Date(item.data.timestamp).toLocaleString()}): ${item.data.message}\n\n`;
                 }
             });
         }

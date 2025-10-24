@@ -39,12 +39,51 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files (frontend)
+# Get the parent directory (ASHER root)
+import pathlib
+parent_dir = pathlib.Path(__file__).parent.parent
+app.mount("/static", StaticFiles(directory=str(parent_dir)), name="static")
+
+# Serve index.html at root and other routes
+from fastapi.responses import FileResponse
+
+@app.get("/index.html")
+async def serve_index():
+    return FileResponse(str(parent_dir / "index.html"))
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    return FileResponse(str(parent_dir / "manifest.json"))
+
+@app.get("/service-worker.js")
+async def serve_sw():
+    return FileResponse(str(parent_dir / "service-worker.js"))
+
+# Serve CSS files
+@app.get("/css/{file_name}")
+async def serve_css(file_name: str):
+    return FileResponse(str(parent_dir / "css" / file_name))
+
+# Serve JS files
+@app.get("/js/{file_name}")
+async def serve_js(file_name: str):
+    return FileResponse(str(parent_dir / "js" / file_name))
+
+# Serve icons
+@app.get("/icons/{file_name}")
+async def serve_icons(file_name: str):
+    return FileResponse(str(parent_dir / "icons" / file_name))
+
 # Request/Response Models
 class AsherTestRequest(BaseModel):
     provider: str
     message: str
     system_prompt: str = ""
     conversation_history: Optional[List[Dict]] = []
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+    api_key: Optional[str] = None
 
 
 class AsherTestResponse(BaseModel):

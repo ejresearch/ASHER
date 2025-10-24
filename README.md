@@ -1,9 +1,9 @@
-# ASHER
-## LLM Testing Platform Developed by YT Research
+# ASHER v1.2.0
+## AI Provider A/B/C/D Testing Platform
 
-**Compare AI providers side-by-side in real-time.**
+**Easily customize prompts and test four LLMs to see what works best.**
 
-Test OpenAI, Claude, Gemini, and Grok simultaneously with the same prompt and see how they compare.
+Test OpenAI, Claude, Gemini, and Grok simultaneously with full per-provider configuration, temperature control, and the latest 2025 models.
 
 ---
 
@@ -39,9 +39,17 @@ python -m http.server 8080
 
 ---
 
-## Features
+## ✨ Features
 
-### Core
+### 🎯 NEW in v1.2.0
+- **Accordion Provider Configuration** - Expandable/collapsible menus for each provider
+- **Per-Provider Model Selection** - Choose specific models for each AI (GPT-5, Claude Sonnet 4.5, etc.)
+- **Temperature Sliders** - Visual control over creativity/randomness (0-2 scale)
+- **Per-Provider API Keys** - Override global keys or configure on-the-fly
+- **Latest 2025 Models** - All providers updated with newest API models
+- **Enhanced Editorial Design** - Warm color palette, smooth animations, micro-interactions
+
+### Core Testing
 - **Simultaneous Testing** - Send to 4 providers at once
 - **Real-time Comparison** - Side-by-side quad or column layout
 - **Token Tracking** - Monitor usage per provider
@@ -56,24 +64,25 @@ python -m http.server 8080
 - **Privacy First** - All data stored locally in browser (never shared)
 
 ### Interface
-- **Modern Design** - Clean, professional UI
-- **Light/Dark Mode** - Apple-style theme toggle
-- **Responsive Layout** - Works on desktop and tablets
+- **Editorial Design** - Warm terracotta, cream, and sage color palette
+- **Light/Dark Mode** - Eye-friendly theme toggle
+- **Responsive Layout** - Works on desktop, tablets, and mobile
+- **PWA Support** - Install as native app
 - **Panel Expansion** - Focus on one provider's response
-- **Sync Scroll** - Scroll all panels together
+- **Keyboard Shortcuts** - Fast navigation (Esc, Cmd+K, Cmd+Enter)
 
 ---
 
-## Supported Models
+## 🎭 Supported Models (2025 Latest)
 
-| Provider | Models |
-|----------|--------|
-| **OpenAI** | GPT-4.1, GPT-4o, o3, o4-mini |
-| **Anthropic** | Claude Sonnet 4.5, Opus 4.1, Sonnet 4 |
-| **Google** | Gemini 2.5 Pro, Gemini 2.5 Flash |
-| **xAI** | Grok 4, Grok 3 |
+| Provider | Models Available |
+|----------|-----------------|
+| **OpenAI** | GPT-5, GPT-5 Mini, GPT-4.1, GPT-4.1 Nano, o3-mini (Reasoning), GPT-4o, GPT-4o Mini |
+| **Anthropic** | Claude Sonnet 4.5, Claude Haiku 4.5, Claude Opus 4.1/4, Claude Sonnet 4, Claude 3.5 Sonnet, Claude 3 Opus/Haiku |
+| **Google** | Gemini 2.5 Pro, Gemini 2.5 Flash/Flash-Lite, Gemini 2.0 Flash/Flash-Lite |
+| **xAI** | Grok 4, Grok 4 Fast/Heavy, Grok 3/3 Mini, Grok 2, Grok Code Fast (Reasoning) |
 
-**Mix and match models** - Configure each provider independently
+**Total: 27 Models** - Configure each provider independently with specific models and temperature settings
 
 ---
 
@@ -189,6 +198,47 @@ Contributions welcome! Feel free to:
 
 ---
 
+## 📝 Changelog
+
+### v1.2.0 (2025-10-24) - "Accordion Edition"
+
+**New Features:**
+- ✨ Accordion-style provider configuration with expand/collapse
+- ✨ Per-provider model selection from dropdown menus
+- ✨ Visual temperature sliders with live value display
+- ✨ Per-provider API key input fields
+- ✨ Auto-save configuration to localStorage
+
+**Model Updates:**
+- 📦 Updated OpenAI models: GPT-5, GPT-5 Mini, GPT-4.1, o3-mini
+- 📦 Updated Claude models: Sonnet 4.5, Haiku 4.5, Opus 4.1
+- 📦 Updated Gemini models: 2.5 Pro, 2.5 Flash/Flash-Lite
+- 📦 Updated Grok models: Grok 4, 4 Fast, 4 Heavy, Code Fast
+- 📦 Total: 27 latest 2025 models
+
+**Design Improvements:**
+- 🎨 Enhanced editorial design with warm color palette
+- 🎨 Smooth accordion animations and transitions
+- 🎨 Improved hover effects and micro-interactions
+- 🎨 Better visual hierarchy and spacing
+- 🎨 Enhanced focus states with glowing rings
+
+**Bug Fixes:**
+- 🐛 Fixed configuration panel spacing and overflow
+- 🐛 Fixed provider checkbox functionality
+- 🐛 Improved mobile responsiveness
+
+### v1.0.0 (2025-10-23) - "Initial Release"
+
+**Core Features:**
+- 🎉 A/B/C/D testing for 4 major AI providers
+- 🎉 System prompts and reference document upload
+- 🎉 Conversation history and export
+- 🎉 Dark/light mode toggle
+- 🎉 Responsive design
+
+---
+
 ## License
 
 MIT License - Free to use for any purpose
@@ -203,3 +253,7 @@ MIT License - Free to use for any purpose
 - OpenAI, Anthropic, Google, and xAI SDKs
 
 **Developed by YT Research**
+
+---
+
+**Made with ❤️ for the AI community**
