@@ -19,9 +19,10 @@ load_dotenv()
 # Import AI providers
 from ai_providers import AIProviderManager
 from document_parser import DocumentParser
+from document_storage import DocumentStorage
 
-# In-memory document storage (persists for session)
-uploaded_documents = {}
+# Initialize persistent document storage
+document_storage = DocumentStorage(storage_path="data/documents.json")
 
 # Create FastAPI app
 app = FastAPI(
@@ -287,9 +288,9 @@ async def upload_document(file: UploadFile = File(...)):
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-        # Store document in memory
+        # Store document persistently
         doc_id = str(datetime.now().timestamp())
-        uploaded_documents[doc_id] = {
+        document = {
             "id": doc_id,
             "filename": filename,
             "content": text_content,
@@ -297,6 +298,7 @@ async def upload_document(file: UploadFile = File(...)):
             "size": len(file_content),
             "uploaded_at": datetime.now().isoformat()
         }
+        document_storage.add(doc_id, document)
 
         return {
             "success": True,
@@ -320,9 +322,10 @@ async def upload_document(file: UploadFile = File(...)):
 @app.get("/documents")
 async def get_documents():
     """Get all uploaded documents"""
+    documents = document_storage.get_all()
     return {
-        "documents": list(uploaded_documents.values()),
-        "count": len(uploaded_documents)
+        "documents": documents,
+        "count": len(documents)
     }
 
 
@@ -330,14 +333,33 @@ async def get_documents():
 @app.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str):
     """Delete an uploaded document"""
-    if doc_id in uploaded_documents:
-        deleted = uploaded_documents.pop(doc_id)
+    deleted = document_storage.delete(doc_id)
+    if deleted:
         return {
             "success": True,
             "message": f"Document '{deleted['filename']}' deleted"
         }
     else:
         raise HTTPException(status_code=404, detail="Document not found")
+
+
+# Get document storage statistics
+@app.get("/documents/stats")
+async def get_document_stats():
+    """Get document storage statistics"""
+    return document_storage.get_stats()
+
+
+# Clear all documents
+@app.delete("/documents")
+async def clear_all_documents():
+    """Clear all uploaded documents"""
+    count = document_storage.clear()
+    return {
+        "success": True,
+        "message": f"Cleared {count} documents",
+        "count": count
+    }
 
 
 if __name__ == "__main__":
