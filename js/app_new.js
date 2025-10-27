@@ -2,8 +2,8 @@
 // Simultaneous A/B/C/D Testing
 
 // API Configuration - Backend runs on port 8001
-const API_BASE = window.location.port === '8888'
-    ? 'http://localhost:8001'  // When frontend is on dev server
+const API_BASE = window.location.protocol === 'file:' || window.location.port === '8888'
+    ? 'http://localhost:8001'  // When frontend is opened as file or on dev server
     : window.location.origin;   // When served from backend directly
 
 // Theme Management - Apple Style Toggle
@@ -334,10 +334,10 @@ function toggleProviderVisual(checkbox) {
 
     // Update panel active state
     const panelMap = {
-        'provider-openai': 'panel-openai',
-        'provider-claude': 'panel-claude',
-        'provider-gemini': 'panel-gemini',
-        'provider-grok': 'panel-grok'
+        'openai-enabled': 'panel-openai',
+        'claude-enabled': 'panel-claude',
+        'gemini-enabled': 'panel-gemini',
+        'grok-enabled': 'panel-grok'
     };
 
     const panelId = panelMap[checkbox.id];
@@ -402,10 +402,10 @@ function updateSmartLayout() {
 // Initialize panel active states based on checkboxes
 function initializePanelStates() {
     const panelMap = {
-        'provider-openai': 'panel-openai',
-        'provider-claude': 'panel-claude',
-        'provider-gemini': 'panel-gemini',
-        'provider-grok': 'panel-grok'
+        'openai-enabled': 'panel-openai',
+        'claude-enabled': 'panel-claude',
+        'gemini-enabled': 'panel-gemini',
+        'grok-enabled': 'panel-grok'
     };
 
     Object.keys(panelMap).forEach(checkboxId => {
@@ -441,10 +441,10 @@ async function loadProviderStatus() {
 
         let html = '';
         const mainProviders = [
-            { id: 'openai-gpt4.1', checkboxId: 'provider-openai' },
-            { id: 'claude-sonnet-4.5', checkboxId: 'provider-claude' },
-            { id: 'gemini-2.5-flash', checkboxId: 'provider-gemini' },
-            { id: 'grok-4', checkboxId: 'provider-grok' }
+            { id: 'openai-gpt4.1', checkboxId: 'openai-enabled' },
+            { id: 'claude-sonnet-4.5', checkboxId: 'claude-enabled' },
+            { id: 'gemini-2.5-flash', checkboxId: 'gemini-enabled' },
+            { id: 'grok-4', checkboxId: 'grok-enabled' }
         ];
 
         mainProviders.forEach(({ id, checkboxId }) => {
@@ -934,10 +934,10 @@ function renderReferenceDocuments() {
 function getActiveProviders() {
     const providers = [];
 
-    if (document.getElementById('provider-openai').checked) providers.push('openai-gpt4.1');
-    if (document.getElementById('provider-claude').checked) providers.push('claude-sonnet-4.5');
-    if (document.getElementById('provider-gemini').checked) providers.push('gemini-2.5-flash');
-    if (document.getElementById('provider-grok').checked) providers.push('grok-4');
+    if (document.getElementById('openai-enabled')?.checked) providers.push('openai-gpt4.1');
+    if (document.getElementById('claude-enabled')?.checked) providers.push('claude-sonnet-4.5');
+    if (document.getElementById('gemini-enabled')?.checked) providers.push('gemini-2.5-flash');
+    if (document.getElementById('grok-enabled')?.checked) providers.push('grok-4');
 
     return providers;
 }
@@ -1184,7 +1184,7 @@ async function sendToProvider(providerId, message, systemContext) {
     // Get provider-specific configuration
     const model = document.getElementById(`${providerId}-model`)?.value;
     const temperature = parseFloat(document.getElementById(`${providerId}-temp`)?.value || '1.0');
-    const apiKey = document.getElementById(`${providerId}-key`)?.value;
+    const apiKey = document.getElementById(`${providerId}-key`)?.value?.trim();
 
     try {
         const requestBody = {
@@ -1197,7 +1197,8 @@ async function sendToProvider(providerId, message, systemContext) {
         // Add optional parameters if set
         if (model) requestBody.model = model;
         if (temperature !== undefined) requestBody.temperature = temperature;
-        if (apiKey) requestBody.api_key = apiKey;
+        // Only send API key if it's explicitly provided in the UI (not empty)
+        if (apiKey && apiKey.length > 0) requestBody.api_key = apiKey;
 
         const response = await fetch(`${API_BASE}/asher/test`, {
             method: 'POST',

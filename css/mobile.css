@@ -179,6 +179,8 @@
     .chat-messages {
         padding: 1rem;
         gap: 1rem;
+        overflow-y: scroll !important;
+        min-height: 0;
     }
 
     .message-bubble {

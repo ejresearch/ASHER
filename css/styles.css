@@ -1019,6 +1019,8 @@ p {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     opacity: 0.5;
+    min-height: 0;
+    height: 100%;
 }
 
 .chat-panel:hover {
@@ -1175,25 +1177,34 @@ p {
 
 /* Chat Messages - Compact Layout */
 .chat-messages {
-    flex: 1;
-    overflow-y: auto;
+    position: absolute;
+    top: 60px; /* Below header */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: auto !important;
+    overflow-x: hidden;
     padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: block; /* Change from flex to block */
 }
 
 .chat-messages::-webkit-scrollbar {
-    width: 10px;
+    width: 14px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 7px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background: var(--text-secondary);
-    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 7px;
+    border: 3px solid var(--bg-primary);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .empty-state {
@@ -1243,6 +1254,11 @@ p {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    margin-bottom: 1rem; /* Add spacing since we removed flex gap */
+}
+
+.message-bubble:last-child {
+    margin-bottom: 0; /* Remove margin from last bubble */
 }
 
 .message-bubble:hover .copy-btn {
