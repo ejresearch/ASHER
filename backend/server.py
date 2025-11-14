@@ -364,7 +364,10 @@ async def clear_all_documents():
 
 if __name__ == "__main__":
     import uvicorn
+
+    # Use PORT from environment (for Render/production) or default to 8001
+    port = int(os.getenv("PORT", "8001"))
+
     print("🧪 Starting ASHER Testing Lab...")
-    print("📡 Server will run at: http://localhost:8001")
-    print("🌐 Open frontend at: file:///Users/elle_jansick/ASHER/index.html")
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    print(f"📡 Server will run at: http://localhost:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
