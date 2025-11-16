@@ -21,7 +21,7 @@
     <header class="header">
         <div class="header-content">
             <h1>ASHER</h1>
-            <p>Easily customize prompts and test four LLMs to see what works best.</p>
+            <p>Configure your system prompt and reference docs in the sidebar, select your LLMs, and start testing.</p>
         </div>
         <div class="theme-toggle">
             <span class="theme-label">Light</span>
@@ -351,6 +351,46 @@
         </div>
     </footer>
 
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal-overlay" style="display: none;">
+        <div class="modal welcome-modal">
+            <div class="modal-header">
+                <h3>👋 Welcome to ASHER!</h3>
+                <button class="modal-close" onclick="closeWelcomeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: var(--text-primary);">Get started in 3 easy steps:</p>
+
+                <div class="welcome-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Open Configuration</h4>
+                        <p>Press <kbd>ESC</kbd> to open the sidebar and configure your system prompt and reference documents.</p>
+                    </div>
+                </div>
+
+                <div class="welcome-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Select Your Models</h4>
+                        <p>Choose which AI providers to test and select model versions from the dropdown menus.</p>
+                    </div>
+                </div>
+
+                <div class="welcome-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Start Testing</h4>
+                        <p>Close the sidebar with <kbd>ESC</kbd> and send your prompt to all selected models at once!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-primary" onclick="closeWelcomeModal()" style="width: 100%;">Got it!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- API Key Modal -->
     <div id="api-key-modal" class="modal-overlay" style="display: none;">
         <div class="modal">
@@ -381,7 +421,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="js/app_new.js?v=22"></script>
+    <script src="js/app_new.js?v=24"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

@@ -161,47 +161,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Show onboarding banner for first-time users
 function showOnboardingIfNeeded() {
-    const hasSeenOnboarding = localStorage.getItem('asher-onboarding-seen');
+    const hasSeenWelcome = localStorage.getItem('asher-welcome-seen');
 
-    if (!hasSeenOnboarding) {
-        const chatGrid = document.getElementById('chat-grid-container');
-        const banner = document.createElement('div');
-        banner.className = 'onboarding-banner';
-        banner.id = 'onboarding-banner';
-        banner.innerHTML = `
-            <div class="onboarding-content">
-                <div class="onboarding-text">
-                    <div class="onboarding-title">Welcome to ASHER</div>
-                    <div class="onboarding-description">Click the menu to configure providers, then type a prompt below to compare AI responses side-by-side</div>
-                </div>
-            </div>
-            <button class="onboarding-close" onclick="dismissOnboarding()">Close</button>
-        `;
-
-        chatGrid.parentElement.insertBefore(banner, chatGrid);
-
-        // Add subtle pulse to hamburger menu
-        const hamburger = document.getElementById('hamburger-btn');
-        if (hamburger) {
-            setTimeout(() => {
-                hamburger.classList.add('hint-pulse');
-                setTimeout(() => {
-                    hamburger.classList.remove('hint-pulse');
-                }, 6000); // 3 pulses × 2s
-            }, 1000);
+    if (!hasSeenWelcome) {
+        // Show welcome modal on first launch
+        const modal = document.getElementById('welcome-modal');
+        if (modal) {
+            modal.style.display = 'flex';
         }
     }
 }
 
-function dismissOnboarding() {
-    const banner = document.getElementById('onboarding-banner');
-    if (banner) {
-        banner.style.animation = 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        setTimeout(() => {
-            banner.remove();
-        }, 300);
+function closeWelcomeModal() {
+    const modal = document.getElementById('welcome-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        localStorage.setItem('asher-welcome-seen', 'true');
     }
-    localStorage.setItem('asher-onboarding-seen', 'true');
 }
 
 // Setup keyboard shortcuts
