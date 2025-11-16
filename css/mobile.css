@@ -450,6 +450,17 @@
     }
 }
 
+/* Toast positioning on mobile */
+@media screen and (max-width: 767px) {
+    .toast-notification {
+        bottom: auto;
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+}
+
 /* Dark Mode Mobile Adjustments */
 @media screen and (max-width: 767px) {
     [data-theme="dark"] .config-panel {

@@ -83,6 +83,7 @@
                             <div class="provider-header" onclick="toggleProviderConfig('openai')">
                                 <div class="provider-header-left">
                                     <input type="checkbox" id="openai-enabled" onchange="toggleProvider('openai', this.checked)">
+                                    <span class="provider-status-dot" id="openai-status-dot"></span>
                                     <span class="provider-name">OpenAI</span>
                                 </div>
                                 <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -119,6 +120,7 @@
                             <div class="provider-header" onclick="toggleProviderConfig('claude')">
                                 <div class="provider-header-left">
                                     <input type="checkbox" id="claude-enabled" onchange="toggleProvider('claude', this.checked)">
+                                    <span class="provider-status-dot" id="claude-status-dot"></span>
                                     <span class="provider-name">Claude</span>
                                 </div>
                                 <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -156,6 +158,7 @@
                             <div class="provider-header" onclick="toggleProviderConfig('gemini')">
                                 <div class="provider-header-left">
                                     <input type="checkbox" id="gemini-enabled" onchange="toggleProvider('gemini', this.checked)">
+                                    <span class="provider-status-dot" id="gemini-status-dot"></span>
                                     <span class="provider-name">Gemini</span>
                                 </div>
                                 <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -190,6 +193,7 @@
                             <div class="provider-header" onclick="toggleProviderConfig('grok')">
                                 <div class="provider-header-left">
                                     <input type="checkbox" id="grok-enabled" onchange="toggleProvider('grok', this.checked)">
+                                    <span class="provider-status-dot" id="grok-status-dot"></span>
                                     <span class="provider-name">Grok</span>
                                 </div>
                                 <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -266,12 +270,7 @@
             <div class="chat-panel" id="panel-openai">
                 <div class="panel-header">
                     <div class="panel-header-left">
-                        <div class="provider-badge openai">OpenAI GPT-4.1</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-openai')" title="Expand/Collapse">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                            </svg>
-                        </button>
+                        <div class="provider-badge openai">OpenAI</div>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="openai-tokens">0 tokens</span>
@@ -279,7 +278,7 @@
                 </div>
                 <div class="chat-messages" id="messages-openai">
                     <div class="empty-state">
-                        <p>OpenAI GPT-4.1 responses will appear here</p>
+                        <p>OpenAI responses will appear here</p>
                     </div>
                 </div>
             </div>
@@ -288,12 +287,7 @@
             <div class="chat-panel" id="panel-claude">
                 <div class="panel-header">
                     <div class="panel-header-left">
-                        <div class="provider-badge claude">Claude Sonnet 4.5</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-claude')" title="Expand/Collapse">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                            </svg>
-                        </button>
+                        <div class="provider-badge claude">Claude</div>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="claude-tokens">0 tokens</span>
@@ -301,7 +295,7 @@
                 </div>
                 <div class="chat-messages" id="messages-claude">
                     <div class="empty-state">
-                        <p>Claude Sonnet 4.5 responses will appear here</p>
+                        <p>Claude responses will appear here</p>
                     </div>
                 </div>
             </div>
@@ -310,12 +304,7 @@
             <div class="chat-panel" id="panel-gemini">
                 <div class="panel-header">
                     <div class="panel-header-left">
-                        <div class="provider-badge gemini">Gemini 2.5 Flash</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-gemini')" title="Expand/Collapse">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                            </svg>
-                        </button>
+                        <div class="provider-badge gemini">Gemini</div>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="gemini-tokens">0 tokens</span>
@@ -323,7 +312,7 @@
                 </div>
                 <div class="chat-messages" id="messages-gemini">
                     <div class="empty-state">
-                        <p>Gemini 2.5 Flash responses will appear here</p>
+                        <p>Gemini responses will appear here</p>
                     </div>
                 </div>
             </div>
@@ -332,12 +321,7 @@
             <div class="chat-panel" id="panel-grok">
                 <div class="panel-header">
                     <div class="panel-header-left">
-                        <div class="provider-badge grok">xAI Grok 4</div>
-                        <button class="expand-btn" onclick="togglePanelExpand('panel-grok')" title="Expand/Collapse">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                            </svg>
-                        </button>
+                        <div class="provider-badge grok">Grok</div>
                     </div>
                     <div class="panel-stats">
                         <span class="stat" id="grok-tokens">0 tokens</span>
@@ -345,7 +329,7 @@
                 </div>
                 <div class="chat-messages" id="messages-grok">
                     <div class="empty-state">
-                        <p>xAI Grok 4 responses will appear here</p>
+                        <p>Grok responses will appear here</p>
                     </div>
                 </div>
             </div>
@@ -397,7 +381,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="js/app_new.js?v=14"></script>
+    <script src="js/app_new.js?v=22"></script>
 
     <!-- PWA Service Worker Registration -->
     <script>

@@ -28,7 +28,7 @@ document_storage = DocumentStorage(storage_path="data/documents.json")
 app = FastAPI(
     title="ASHER - AI Testing Lab",
     description="Standalone A/B/C/D Testing for Multiple AI Providers",
-    version="1.0.0"
+    version="1.2.0"
 )
 
 # CORS Configuration - Allow all origins for standalone tool
@@ -99,7 +99,7 @@ class AsherTestResponse(BaseModel):
 def root():
     return {
         "name": "ASHER - AI Testing Lab",
-        "version": "1.0.0",
+        "version": "1.2.0",
         "description": "Standalone A/B/C/D testing for AI providers",
         "providers": ["OpenAI", "Anthropic Claude", "Google Gemini", "xAI Grok"],
         "endpoints": {
@@ -119,7 +119,7 @@ def health_check():
     return {
         "status": "healthy",
         "service": "ASHER Testing Lab",
-        "version": "1.0.0"
+        "version": "1.2.0"
     }
 
 
@@ -251,7 +251,7 @@ async def asher_status():
 
     return {
         "service": "ASHER Testing Lab",
-        "version": "1.0.0",
+        "version": "1.2.0",
         "available": True,
         "providers": asher_providers,
         "total_providers": len(asher_providers),

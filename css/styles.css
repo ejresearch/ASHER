@@ -616,6 +616,28 @@ p {
     letter-spacing: 0.02em;
 }
 
+.provider-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    opacity: 0.3;
+    flex-shrink: 0;
+    margin-right: 4px;
+    transition: all 0.3s ease;
+}
+
+.provider-status-dot.status-configured {
+    background: #10B981;
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.provider-status-dot.status-unconfigured {
+    background: #EF4444;
+    opacity: 0.7;
+}
+
 .provider-header .chevron {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     stroke: var(--text-secondary);
@@ -1016,24 +1038,19 @@ p {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    opacity: 0.5;
+    opacity: 1;
     min-height: 0;
     height: 100%;
 }
 
 .chat-panel:hover {
     box-shadow: 0 8px 24px rgba(42, 38, 34, 0.2);
-    transform: translateY(-2px);
 }
 
 .chat-panel.provider-active {
-    opacity: 1;
-}
-
-.chat-panel.auto-hidden {
-    display: none;
+    /* All panels always visible */
 }
 
 .chat-panel::before {
@@ -1056,31 +1073,9 @@ p {
     opacity: 0.6;
 }
 
-.chat-panel.expanded {
-    grid-column: 1 / -1;
-    grid-row: 1 / -1;
-    z-index: 10;
-}
+/* Removed expand functionality - fixed 2x2 grid only */
 
-/* Smart grid layouts based on active panels */
-.chat-grid.active-1 {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-}
-
-.chat-grid.active-2 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-}
-
-.chat-grid.active-3 {
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 1fr 1fr;
-}
-
-.chat-grid.active-3 .chat-panel.provider-active:first-child {
-    grid-row: 1 / 3;
-}
+/* Fixed 2x2 grid - no auto-adjustment */
 
 /* Panel Header - Compact */
 .panel-header {
@@ -1142,24 +1137,7 @@ p {
     background: linear-gradient(135deg, #8B6F9B 0%, #6F5A7C 100%);
 }
 
-.expand-btn {
-    width: 28px;
-    height: 28px;
-    background: var(--bg-primary);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.expand-btn:hover {
-    background: var(--accent);
-    color: white;
-}
+/* Expand button removed - fixed grid only */
 
 .panel-stats {
     display: flex;
@@ -1416,6 +1394,10 @@ p {
     margin-right: 1rem;
 }
 
+[data-theme="dark"] .message-bubble.assistant {
+    background: linear-gradient(135deg, rgba(58, 53, 48, 0.8) 0%, rgba(42, 38, 34, 0.6) 100%);
+}
+
 .message-bubble.assistant::before {
     background: linear-gradient(180deg, var(--openai), var(--claude));
 }
@@ -1423,7 +1405,30 @@ p {
 .message-bubble.loading {
     background: var(--bg-secondary);
     margin-right: 1rem;
-    animation: pulse 2s infinite;
+    position: relative;
+    overflow: visible;
+}
+
+.message-bubble.loading::after {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: dotPulse 1.4s infinite ease-in-out;
+    margin-left: 4px;
+}
+
+@keyframes dotPulse {
+    0%, 80%, 100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 @keyframes pulse {
@@ -1447,6 +1452,15 @@ p {
     }
 }
 
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .message-bubble.error {
     background: linear-gradient(135deg, rgba(216, 112, 79, 0.1) 0%, rgba(184, 90, 63, 0.1) 100%);
     border: 2px solid var(--accent);
@@ -1467,7 +1481,7 @@ p {
     background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     border-left: 4px solid var(--accent);
-    margin: 0.5rem 0;
+    margin: 1rem 0;
 }
 
 .context-change-content {
@@ -1476,15 +1490,20 @@ p {
     gap: 0.75rem;
 }
 
+.context-change-content svg {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
 .context-change-icon {
     font-size: 1.25rem;
 }
 
 .context-change-text {
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    font-style: italic;
+    line-height: 1.4;
 }
 
 /* Input Bar - Compact */

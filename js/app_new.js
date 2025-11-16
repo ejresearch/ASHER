@@ -1,5 +1,6 @@
 // ASHER - AI Provider Testing Lab
 // Simultaneous A/B/C/D Testing
+console.log('🔵 app_new.js is loading...');
 
 // API Configuration - Backend runs on port 8001
 const API_BASE = window.location.protocol === 'file:' || window.location.port === '8888'
@@ -45,6 +46,7 @@ let savedConversations = []; // Saved conversation history
 let isColumnsLayout = false;
 let isSyncScrollEnabled = false;
 let isConfigPanelOpen = false;
+let enabledProviders = new Set(); // Track enabled providers
 
 // Initialize conversation history for all providers
 function initializeConversationHistory() {
@@ -141,9 +143,11 @@ const PROVIDER_MAP = {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 ASHER initializing...');
     loadTheme();
     initializeConversationHistory();
     loadProviderStatus();
+    loadProviderConfigs(); // Load saved provider configurations
     setupEnterKeyHandler();
     loadLayoutPreference();
     loadSyncScrollPreference();
@@ -151,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReferenceDocuments();
     loadSavedConversations();
     showOnboardingIfNeeded();
+    checkStorageQuota(); // Check storage usage on load
+    console.log('✅ ASHER fully loaded');
 });
 
 // Show onboarding banner for first-time users
@@ -200,52 +206,80 @@ function dismissOnboarding() {
 
 // Setup keyboard shortcuts
 function setupEnterKeyHandler() {
+    console.log('Setting up keyboard shortcuts...');
     const textarea = document.getElementById('test-message');
 
-    // Enter to send
+    if (!textarea) {
+        console.error('❌ Textarea not found for keyboard shortcuts');
+        return;
+    }
+
+    console.log('✅ Textarea found:', textarea);
+
+    // Enter to send (in textarea only)
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
+            console.log('Enter pressed in textarea');
             e.preventDefault();
             sendToAllProviders();
         }
     });
 
-    // Global keyboard shortcuts
+    // Global keyboard shortcuts - simplified
     document.addEventListener('keydown', (e) => {
-        // Cmd/Ctrl + Enter: Send to all providers (from anywhere)
+        console.log('Key pressed:', e.key, 'metaKey:', e.metaKey, 'ctrlKey:', e.ctrlKey);
+
+        // Cmd/Ctrl + Enter: Send to all providers
         if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            console.log('🚀 Cmd+Enter triggered');
             e.preventDefault();
+            e.stopPropagation();
             sendToAllProviders();
+            return;
         }
 
         // Cmd/Ctrl + K: Focus input
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            console.log('🎯 Cmd+K triggered');
             e.preventDefault();
+            e.stopPropagation();
             textarea.focus();
+            return;
         }
 
-        // Cmd/Ctrl + C: Copy last response (when not selecting text)
-        if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !window.getSelection().toString()) {
-            const lastResponse = document.querySelector('.message-bubble.assistant:last-of-type .message-content');
-            if (lastResponse) {
-                e.preventDefault();
-                copyToClipboard(lastResponse.textContent);
-                showToast('Last response copied!');
-            }
-        }
-
-        // Escape: Toggle sidebar (open/close)
+        // Escape: Toggle sidebar
         if (e.key === 'Escape') {
+            console.log('🚪 Escape triggered');
             e.preventDefault();
+            e.stopPropagation();
             toggleConfigPanel();
+            return;
         }
 
         // Cmd/Ctrl + /: Show keyboard shortcuts help
         if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+            console.log('❓ Cmd+/ triggered');
             e.preventDefault();
+            e.stopPropagation();
             showKeyboardShortcuts();
+            return;
+        }
+
+        // Cmd/Ctrl + C: Copy last response
+        const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+        if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isTyping && !window.getSelection().toString()) {
+            const lastResponse = document.querySelector('.message-bubble.assistant:last-of-type .message-content');
+            if (lastResponse) {
+                console.log('📋 Cmd+C triggered (copy last response)');
+                e.preventDefault();
+                e.stopPropagation();
+                copyToClipboard(lastResponse.textContent);
+                showToast('Last response copied!');
+            }
         }
     });
+
+    console.log('✅ Keyboard shortcuts initialized');
 }
 
 // Toast notification helper
@@ -269,8 +303,25 @@ function copyToClipboard(text) {
     });
 }
 
+// Debounce utility function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // Show keyboard shortcuts modal
 function showKeyboardShortcuts() {
+    // Detect OS for keyboard symbols
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? '⌘' : 'Ctrl';
+
     const modal = document.createElement('div');
     modal.className = 'shortcuts-modal';
     modal.innerHTML = `
@@ -281,15 +332,15 @@ function showKeyboardShortcuts() {
             </div>
             <div class="shortcuts-list">
                 <div class="shortcut-item">
-                    <kbd>⌘ Enter</kbd>
+                    <kbd>${modKey} + Enter</kbd>
                     <span>Send to all providers</span>
                 </div>
                 <div class="shortcut-item">
-                    <kbd>⌘ K</kbd>
+                    <kbd>${modKey} + K</kbd>
                     <span>Focus input</span>
                 </div>
                 <div class="shortcut-item">
-                    <kbd>⌘ C</kbd>
+                    <kbd>${modKey} + C</kbd>
                     <span>Copy last response</span>
                 </div>
                 <div class="shortcut-item">
@@ -297,7 +348,7 @@ function showKeyboardShortcuts() {
                     <span>Toggle sidebar</span>
                 </div>
                 <div class="shortcut-item">
-                    <kbd>⌘ /</kbd>
+                    <kbd>${modKey} + /</kbd>
                     <span>Show this help</span>
                 </div>
             </div>
@@ -368,35 +419,7 @@ function updateSelectedProvidersCount() {
         sendBtn.disabled = false;
     }
 
-    // Update smart layout
-    updateSmartLayout();
-}
-
-// Smart auto-hide and layout adjustment
-function updateSmartLayout() {
-    const chatGrid = document.querySelector('.chat-grid');
-    if (!chatGrid) return;
-
-    const panels = document.querySelectorAll('.chat-panel');
-    const activePanels = document.querySelectorAll('.chat-panel.provider-active');
-    const activeCount = activePanels.length;
-
-    // Remove all active-* classes
-    chatGrid.classList.remove('active-1', 'active-2', 'active-3', 'active-4');
-
-    // Add class based on active count
-    if (activeCount > 0) {
-        chatGrid.classList.add(`active-${activeCount}`);
-    }
-
-    // Auto-hide inactive panels
-    panels.forEach(panel => {
-        if (!panel.classList.contains('provider-active') && !panel.classList.contains('expanded')) {
-            panel.classList.add('auto-hidden');
-        } else {
-            panel.classList.remove('auto-hidden');
-        }
-    });
+    // Keep all panels visible in fixed 2x2 grid
 }
 
 // Initialize panel active states based on checkboxes
@@ -420,9 +443,6 @@ function initializePanelStates() {
             }
         }
     });
-
-    // Update smart layout after initializing
-    updateSmartLayout();
 }
 const API_KEY_MAP = {
     'openai-gpt4.1': 'OPENAI_API_KEY',
@@ -966,14 +986,39 @@ function buildContext() {
 // Detect if context has changed
 function detectContextChanges(activeProviders) {
     const newContext = buildContext();
+    const newSystemPrompt = document.getElementById('system-prompt').value.trim();
+    const enabledDocs = referenceDocuments.filter(doc => doc.enabled);
 
     // Check if context changed
     if (currentSystemContext !== null && currentSystemContext !== newContext) {
         const timestamp = new Date().toISOString();
+
+        // Build specific change message
+        let changeMessages = [];
+        const oldSystemPrompt = currentSystemContext.split('\n\n=== REFERENCE DOCUMENTS ===')[0];
+
+        if (oldSystemPrompt !== newSystemPrompt) {
+            changeMessages.push('System prompt updated');
+        }
+
+        // Check document changes
+        const oldDocSection = currentSystemContext.includes('=== REFERENCE DOCUMENTS ===');
+        const newDocSection = newContext.includes('=== REFERENCE DOCUMENTS ===');
+
+        if (!oldDocSection && newDocSection) {
+            changeMessages.push(`Added ${enabledDocs.length} document(s)`);
+        } else if (oldDocSection && !newDocSection) {
+            changeMessages.push('Removed all documents');
+        } else if (oldDocSection && newDocSection) {
+            changeMessages.push('Reference documents changed');
+        }
+
+        const message = changeMessages.join(' • ') || 'Context updated';
+
         const changeEvent = {
             type: 'context_change',
             timestamp: timestamp,
-            message: 'System prompt or reference documents changed'
+            message: message
         };
 
         // Log the change for all active providers
@@ -1002,6 +1047,10 @@ function addContextChangeIndicator(providerId, message) {
     indicatorDiv.className = 'context-change-indicator';
     indicatorDiv.innerHTML = `
         <div class="context-change-content">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="min-width: 16px;">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
             <span class="context-change-text">${message}</span>
         </div>
     `;
@@ -1278,10 +1327,12 @@ async function sendToAllProviders() {
     // Build context from system prompt and reference documents
     const systemContext = buildContext();
 
-    // Disable send button
+    // Disable send button with loading state
     const sendBtn = document.getElementById('send-btn');
+    const originalText = sendBtn.textContent;
     sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending...';
+    sendBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"/></svg>Sending...';
+    sendBtn.style.opacity = '0.7';
 
     // Add user message to all active provider panels
     activeProviders.forEach(providerId => {
@@ -1303,16 +1354,31 @@ async function sendToAllProviders() {
 
     // Re-enable send button
     sendBtn.disabled = false;
-    sendBtn.textContent = 'Send to All Providers';
+    sendBtn.innerHTML = originalText;
+    sendBtn.style.opacity = '1';
+
+    // Update button text based on active providers
+    updateSelectedProvidersCount();
 
     console.log('✅ All providers responded');
 }
 
-// Clear all chats
+// Store for undo functionality
+let undoSnapshot = null;
+let undoTimeout = null;
+
+// Clear all chats with undo
 function clearAllChats() {
-    if (!confirm('Clear all chat history? This cannot be undone.')) {
+    if (!confirm('Clear all chat history?')) {
         return;
     }
+
+    // Create snapshot for undo
+    undoSnapshot = {
+        conversationHistory: JSON.parse(JSON.stringify(conversationHistory)),
+        conversationEvents: JSON.parse(JSON.stringify(conversationEvents)),
+        currentSystemContext: currentSystemContext
+    };
 
     // Reset conversation history and events
     Object.keys(conversationHistory).forEach(key => {
@@ -1341,13 +1407,81 @@ function clearAllChats() {
     });
 
     console.log('🧹 All chats cleared');
+
+    // Show undo toast
+    showUndoToast();
 }
 
-// Toggle panel fullscreen
-function togglePanelExpand(panelId) {
-    const panel = document.getElementById(panelId);
-    panel.classList.toggle('expanded');
+// Show toast with undo button
+function showUndoToast() {
+    // Clear any existing undo timeout
+    if (undoTimeout) {
+        clearTimeout(undoTimeout);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification undo-toast show';
+    toast.innerHTML = `
+        <span>Chats cleared</span>
+        <button onclick="undoClearChats()" style="background: var(--accent); border: none; color: white; padding: 0.375rem 0.875rem; border-radius: 6px; margin-left: 1rem; cursor: pointer; font-weight: 600;">Undo</button>
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-remove after 5 seconds
+    undoTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+            undoSnapshot = null;
+        }, 300);
+    }, 5000);
 }
+
+// Undo clear chats
+window.undoClearChats = function() {
+    if (!undoSnapshot) return;
+
+    // Restore from snapshot
+    conversationHistory = JSON.parse(JSON.stringify(undoSnapshot.conversationHistory));
+    conversationEvents = JSON.parse(JSON.stringify(undoSnapshot.conversationEvents));
+    currentSystemContext = undoSnapshot.currentSystemContext;
+
+    // Restore UI by re-rendering messages
+    Object.keys(conversationHistory).forEach(providerId => {
+        const provider = PROVIDER_MAP[providerId];
+        if (!provider) return;
+
+        const messagesContainer = document.getElementById(provider.messagesId);
+        messagesContainer.innerHTML = '';
+
+        // Re-add all messages
+        conversationHistory[providerId].forEach(msg => {
+            addMessage(providerId, msg.role, msg.content);
+        });
+    });
+
+    // Clear undo snapshot
+    undoSnapshot = null;
+
+    // Remove undo toast
+    const toast = document.querySelector('.undo-toast');
+    if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }
+
+    // Clear timeout
+    if (undoTimeout) {
+        clearTimeout(undoTimeout);
+    }
+
+    showToast('Chats restored!');
+    console.log('↩️ Chats restored');
+};
+
+// Panel expand removed - fixed 2x2 grid only
 
 // Toggle layout between quad split and 4 columns
 function toggleLayout() {
@@ -1482,9 +1616,6 @@ function toggleProvider(providerId, enabled) {
         enabledProviders.delete(providerId);
     }
 
-    // Update visibility based on layout
-    updatePanelVisibility();
-
     // Save to localStorage
     localStorage.setItem(`provider-${providerId}-enabled`, enabled);
 }
@@ -1493,6 +1624,36 @@ function updateTempDisplay(providerId, value) {
     const display = document.getElementById(`${providerId}-temp-display`);
     if (display) {
         display.textContent = parseFloat(value).toFixed(1);
+    }
+}
+
+// Provider badges are now static, showing only provider names
+// Model information is shown in the config panel only
+
+// Update provider status indicator
+function updateProviderStatus(providerId) {
+    const statusDot = document.getElementById(`${providerId}-status-dot`);
+    if (!statusDot) return;
+
+    // Map provider ID to actual localStorage key name
+    const keyMap = {
+        'openai': 'OPENAI_API_KEY',
+        'claude': 'ANTHROPIC_API_KEY',
+        'gemini': 'GOOGLE_API_KEY',
+        'grok': 'XAI_API_KEY'
+    };
+
+    const apiKey = localStorage.getItem(keyMap[providerId]);
+    const hasKey = apiKey && apiKey.trim() && !apiKey.startsWith('your-') && apiKey.length > 10;
+
+    statusDot.classList.remove('status-configured', 'status-unconfigured');
+
+    if (hasKey) {
+        statusDot.classList.add('status-configured');
+        statusDot.title = 'API key configured';
+    } else {
+        statusDot.classList.add('status-unconfigured');
+        statusDot.title = 'API key not configured';
     }
 }
 
@@ -1530,12 +1691,46 @@ function loadProviderConfigs() {
         if (savedKey && keyInput) {
             keyInput.value = savedKey;
         }
+
+        // Update status indicator
+        updateProviderStatus(provider);
     });
+}
+
+// Check localStorage quota and warn if needed
+function checkStorageQuota() {
+    try {
+        // Estimate storage usage
+        let totalSize = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                totalSize += localStorage[key].length + key.length;
+            }
+        }
+
+        // Warn if approaching 5MB limit (rough estimate)
+        const estimatedMB = totalSize / (1024 * 1024);
+        if (estimatedMB > 4) {
+            console.warn(`LocalStorage usage: ~${estimatedMB.toFixed(2)}MB. Approaching 5MB limit.`);
+            showToast('Storage almost full. Consider clearing old conversations.', 5000);
+        }
+    } catch (error) {
+        console.error('Failed to check storage quota:', error);
+    }
 }
 
 // Save provider configuration when changed
 function saveProviderConfig(providerId, field, value) {
-    localStorage.setItem(`provider-${providerId}-${field}`, value);
+    try {
+        localStorage.setItem(`provider-${providerId}-${field}`, value);
+    } catch (error) {
+        if (error.name === 'QuotaExceededError') {
+            showToast('Storage full! Please clear old conversations or data.', 5000);
+            console.error('LocalStorage quota exceeded:', error);
+        } else {
+            console.error('Failed to save config:', error);
+        }
+    }
 }
 
 // Add event listeners for saving configs
@@ -1551,11 +1746,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Temperature slider
+        // Temperature slider with debouncing
         const tempInput = document.getElementById(`${provider}-temp`);
         if (tempInput) {
-            tempInput.addEventListener('change', (e) => {
-                saveProviderConfig(provider, 'temp', e.target.value);
+            // Debounced save function (300ms delay)
+            const debouncedSave = debounce((value) => {
+                saveProviderConfig(provider, 'temp', value);
+            }, 300);
+
+            // Update display immediately, save with debounce
+            tempInput.addEventListener('input', (e) => {
+                updateTempDisplay(provider, e.target.value);
+                debouncedSave(e.target.value);
             });
         }
 
@@ -1564,7 +1766,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (keyInput) {
             keyInput.addEventListener('blur', (e) => {
                 saveProviderConfig(provider, 'key', e.target.value);
+                updateProviderStatus(provider);
             });
+
+            // Also update on input for immediate feedback
+            keyInput.addEventListener('input', debounce((e) => {
+                updateProviderStatus(provider);
+            }, 500));
         }
     });
 
@@ -1635,42 +1843,49 @@ function exportResults() {
 
 // Export as JSON
 function exportJSON() {
-    const systemPrompt = document.getElementById('system-prompt').value;
-    const activeProviders = getActiveProviders();
+    try {
+        const systemPrompt = document.getElementById('system-prompt').value;
+        const activeProviders = getActiveProviders();
 
-    const exportData = {
-        timestamp: new Date().toISOString(),
-        configuration: {
-            system_prompt: systemPrompt,
-            reference_documents: referenceDocuments,
-            active_providers: activeProviders
-        },
-        conversations: {},
-        events: {}
-    };
+        const exportData = {
+            timestamp: new Date().toISOString(),
+            configuration: {
+                system_prompt: systemPrompt,
+                reference_documents: referenceDocuments,
+                active_providers: activeProviders
+            },
+            conversations: {},
+            events: {}
+        };
 
-    // Export conversation history and events for each provider
-    Object.keys(conversationHistory).forEach(providerId => {
-        if (conversationHistory[providerId].length > 0) {
-            exportData.conversations[providerId] = conversationHistory[providerId];
-        }
-        if (conversationEvents[providerId] && conversationEvents[providerId].length > 0) {
-            exportData.events[providerId] = conversationEvents[providerId];
-        }
-    });
+        // Export conversation history and events for each provider
+        Object.keys(conversationHistory).forEach(providerId => {
+            if (conversationHistory[providerId].length > 0) {
+                exportData.conversations[providerId] = conversationHistory[providerId];
+            }
+            if (conversationEvents[providerId] && conversationEvents[providerId].length > 0) {
+                exportData.events[providerId] = conversationEvents[providerId];
+            }
+        });
 
-    // Create download
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `asher-results-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+        // Create download
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `asher-results-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-    console.log('📥 JSON exported');
+        console.log('📥 JSON exported');
+        showToast('JSON export successful!');
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('Failed to export JSON. Please try again.', 3000);
+        alert('Export failed: ' + error.message + '\n\nPlease check the console for details.');
+    }
 }
 
 // Export as Markdown comparison table
@@ -1877,8 +2092,14 @@ function exportAsMarkdown() {
 
 // Export as PDF
 function exportAsPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    try {
+        // Check if jsPDF is loaded
+        if (!window.jspdf) {
+            throw new Error('PDF library not loaded. Please refresh the page and try again.');
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
 
     const systemPrompt = document.getElementById('system-prompt').value;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -1965,8 +2186,14 @@ function exportAsPDF() {
         }
     });
 
-    doc.save(`asher-results-${Date.now()}.pdf`);
-    console.log('📥 PDF exported');
+        doc.save(`asher-results-${Date.now()}.pdf`);
+        console.log('📥 PDF exported');
+        showToast('PDF export successful!');
+    } catch (error) {
+        console.error('PDF export error:', error);
+        showToast('Failed to export PDF. ' + error.message, 4000);
+        alert('PDF export failed: ' + error.message + '\n\nPlease check the console for details.');
+    }
 }
 
 // Helper to download file
