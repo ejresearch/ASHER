@@ -185,24 +185,30 @@ class AIProviderManager:
     """Manages multiple AI providers"""
 
     PROVIDERS = {
-        # OpenAI - Latest Models (Oct 2025)
+        # OpenAI - Latest Models (Nov 2025)
+        "openai-gpt5.1": {"class": OpenAIProvider, "model": "gpt-5.1", "name": "OpenAI GPT-5.1"},
+        "openai-gpt5": {"class": OpenAIProvider, "model": "gpt-5", "name": "OpenAI GPT-5"},
+        "openai-gpt5-mini": {"class": OpenAIProvider, "model": "gpt-5-mini", "name": "OpenAI GPT-5 Mini"},
         "openai-gpt4.1": {"class": OpenAIProvider, "model": "gpt-4.1", "name": "OpenAI GPT-4.1"},
         "openai-gpt4o": {"class": OpenAIProvider, "model": "gpt-4o", "name": "OpenAI GPT-4o"},
         "openai-o3": {"class": OpenAIProvider, "model": "o3", "name": "OpenAI o3"},
         "openai-o4-mini": {"class": OpenAIProvider, "model": "o4-mini", "name": "OpenAI o4-mini"},
 
-        # Anthropic Claude - Latest Models (Oct 2025)
+        # Anthropic Claude - Latest Models (Nov 2025)
         "claude-sonnet-4.5": {"class": ClaudeProvider, "model": "claude-sonnet-4-5-20250929", "name": "Claude Sonnet 4.5"},
         "claude-opus-4.1": {"class": ClaudeProvider, "model": "claude-opus-4-1-20250805", "name": "Claude Opus 4.1"},
         "claude-sonnet-4": {"class": ClaudeProvider, "model": "claude-sonnet-4-20250514", "name": "Claude Sonnet 4"},
 
-        # Google Gemini - Latest Models (Oct 2025)
+        # Google Gemini - Latest Models (Nov 2025)
         "gemini-2.5-pro": {"class": GeminiProvider, "model": "gemini-2.5-pro", "name": "Gemini 2.5 Pro"},
         "gemini-2.5-flash": {"class": GeminiProvider, "model": "gemini-2.5-flash", "name": "Gemini 2.5 Flash"},
+        "gemini-2.0-flash": {"class": GeminiProvider, "model": "gemini-2.0-flash-001", "name": "Gemini 2.0 Flash"},
 
-        # xAI Grok - Latest Models (Oct 2025)
+        # xAI Grok - Latest Models (Nov 2025)
+        "grok-4-1-fast": {"class": GrokProvider, "model": "grok-4-1-fast-reasoning", "name": "xAI Grok 4.1 Fast"},
         "grok-4": {"class": GrokProvider, "model": "grok-4", "name": "xAI Grok 4"},
         "grok-3": {"class": GrokProvider, "model": "grok-3", "name": "xAI Grok 3"},
+        "grok-beta": {"class": GrokProvider, "model": "grok-beta", "name": "xAI Grok Beta"},
     }
 
     @classmethod

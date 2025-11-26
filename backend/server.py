@@ -76,6 +76,16 @@ async def serve_js(file_name: str):
 async def serve_icons(file_name: str):
     return FileResponse(str(parent_dir / "icons" / file_name))
 
+# Serve images
+@app.get("/images/{file_name}")
+async def serve_images(file_name: str):
+    return FileResponse(str(parent_dir / "images" / file_name))
+
+# Serve images from logos subfolder
+@app.get("/images/logos/{file_name}")
+async def serve_logo_images(file_name: str):
+    return FileResponse(str(parent_dir / "images" / "logos" / file_name))
+
 # Request/Response Models
 class AsherTestRequest(BaseModel):
     provider: str
@@ -94,16 +104,22 @@ class AsherTestResponse(BaseModel):
     error: Optional[str] = None
 
 
-# Root endpoint
+# Root endpoint - serve the ASHER frontend
 @app.get("/")
-def root():
+async def root():
+    return FileResponse(str(parent_dir / "index.html"))
+
+# API info endpoint
+@app.get("/api")
+def api_info():
     return {
         "name": "ASHER - AI Testing Lab",
         "version": "1.2.0",
         "description": "Standalone A/B/C/D testing for AI providers",
         "providers": ["OpenAI", "Anthropic Claude", "Google Gemini", "xAI Grok"],
         "endpoints": {
-            "/": "This info page",
+            "/": "ASHER Frontend",
+            "/api": "This API info page",
             "/health": "Health check",
             "/providers": "List available providers",
             "/asher/test": "Test a single provider",

@@ -62,6 +62,28 @@ function initializeConversationHistory() {
 
 // Provider mapping - Maps provider IDs to UI elements
 const PROVIDER_MAP = {
+    // OpenAI Models
+    'openai-gpt5.1': {
+        id: 'openai-gpt5.1',
+        name: 'OpenAI GPT-5.1',
+        messagesId: 'messages-openai',
+        tokensId: 'openai-tokens',
+        timeId: 'openai-time'
+    },
+    'openai-gpt5': {
+        id: 'openai-gpt5',
+        name: 'OpenAI GPT-5',
+        messagesId: 'messages-openai',
+        tokensId: 'openai-tokens',
+        timeId: 'openai-time'
+    },
+    'openai-gpt5-mini': {
+        id: 'openai-gpt5-mini',
+        name: 'OpenAI GPT-5 Mini',
+        messagesId: 'messages-openai',
+        tokensId: 'openai-tokens',
+        timeId: 'openai-time'
+    },
     'openai-gpt4.1': {
         id: 'openai-gpt4.1',
         name: 'OpenAI GPT-4.1',
@@ -90,6 +112,7 @@ const PROVIDER_MAP = {
         tokensId: 'openai-tokens',
         timeId: 'openai-time'
     },
+    // Claude Models
     'claude-sonnet-4.5': {
         id: 'claude-sonnet-4.5',
         name: 'Claude Sonnet 4.5',
@@ -111,6 +134,14 @@ const PROVIDER_MAP = {
         tokensId: 'claude-tokens',
         timeId: 'claude-time'
     },
+    // Gemini Models
+    'gemini-2.5-pro': {
+        id: 'gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
+        messagesId: 'messages-gemini',
+        tokensId: 'gemini-tokens',
+        timeId: 'gemini-time'
+    },
     'gemini-2.5-flash': {
         id: 'gemini-2.5-flash',
         name: 'Gemini 2.5 Flash',
@@ -118,12 +149,20 @@ const PROVIDER_MAP = {
         tokensId: 'gemini-tokens',
         timeId: 'gemini-time'
     },
-    'gemini-2.5-pro': {
-        id: 'gemini-2.5-pro',
-        name: 'Gemini 2.5 Pro',
+    'gemini-2.0-flash': {
+        id: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
         messagesId: 'messages-gemini',
         tokensId: 'gemini-tokens',
         timeId: 'gemini-time'
+    },
+    // Grok Models
+    'grok-4-1-fast': {
+        id: 'grok-4-1-fast',
+        name: 'xAI Grok 4.1 Fast',
+        messagesId: 'messages-grok',
+        tokensId: 'grok-tokens',
+        timeId: 'grok-time'
     },
     'grok-4': {
         id: 'grok-4',
@@ -138,22 +177,42 @@ const PROVIDER_MAP = {
         messagesId: 'messages-grok',
         tokensId: 'grok-tokens',
         timeId: 'grok-time'
+    },
+    'grok-beta': {
+        id: 'grok-beta',
+        name: 'xAI Grok Beta',
+        messagesId: 'messages-grok',
+        tokensId: 'grok-tokens',
+        timeId: 'grok-time'
     }
 };
+
+// Load active state for provider cards (disabled - start fresh each time)
+function loadActiveProviderCards() {
+    // Start with no providers active on page load
+    enabledProviders.clear();
+
+    // Remove active class from all cards
+    const cards = document.querySelectorAll('.provider-card');
+    cards.forEach(card => card.classList.remove('active'));
+
+    console.log('Starting with no active providers');
+}
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 ASHER initializing...');
     loadTheme();
     initializeConversationHistory();
-    loadProviderStatus();
+    // loadProviderStatus(); // Disabled - using new card-based UI
     loadProviderConfigs(); // Load saved provider configurations
+    loadActiveProviderCards(); // Load active state for provider cards
     setupEnterKeyHandler();
     loadLayoutPreference();
     loadSyncScrollPreference();
     loadConfigPanelState();
     loadReferenceDocuments();
-    loadSavedConversations();
+    // loadSavedConversations(); // Disabled - removed from UI
     showOnboardingIfNeeded();
     checkStorageQuota(); // Check storage usage on load
     console.log('✅ ASHER fully loaded');
@@ -179,6 +238,42 @@ function closeWelcomeModal() {
         localStorage.setItem('asher-welcome-seen', 'true');
     }
 }
+
+// Settings Modal Functions
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+
+        // Sync settings with current state
+        const layoutBtn = document.getElementById('layout-toggle-settings');
+        const syncCheckbox = document.getElementById('sync-scroll-settings');
+        const mainLayoutBtn = document.getElementById('layout-toggle');
+        const mainSyncCheckbox = document.getElementById('sync-scroll');
+
+        if (layoutBtn && mainLayoutBtn) {
+            layoutBtn.textContent = mainLayoutBtn.textContent;
+        }
+
+        if (syncCheckbox && mainSyncCheckbox) {
+            syncCheckbox.checked = mainSyncCheckbox.checked;
+        }
+    }
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'settings-modal') {
+        closeSettingsModal();
+    }
+});
 
 // Setup keyboard shortcuts
 function setupEnterKeyHandler() {
@@ -543,6 +638,8 @@ function closeApiKeyModal() {
 }
 
 function saveApiKey() {
+    const modal = document.getElementById('api-key-modal');
+    const providerId = modal.dataset.currentProvider || currentProviderId;
     const input = document.getElementById('api-key-input');
     const modelSelect = document.getElementById('model-select');
     const apiKey = input.value.trim();
@@ -553,13 +650,37 @@ function saveApiKey() {
         return;
     }
 
+    // Map to API key storage names
+    const keyMap = {
+        'openai': 'OPENAI_API_KEY',
+        'claude': 'ANTHROPIC_API_KEY',
+        'gemini': 'GOOGLE_API_KEY',
+        'grok': 'XAI_API_KEY'
+    };
+
     // Save API key
-    const keyName = API_KEY_MAP[currentProviderId];
+    const keyName = keyMap[providerId] || API_KEY_MAP[currentProviderId];
     localStorage.setItem(keyName, apiKey);
 
     // Save selected model preference
-    const providerFamily = currentProviderId.split('-')[0];
-    localStorage.setItem(`${providerFamily}_selected_model`, selectedModel);
+    const providerFamily = providerId || currentProviderId.split('-')[0];
+    localStorage.setItem(`provider-${providerFamily}-model`, selectedModel);
+
+    // Update the actual model select in the hidden config
+    const actualModelSelect = document.getElementById(`${providerFamily}-model`);
+    if (actualModelSelect) {
+        actualModelSelect.value = selectedModel;
+    }
+
+    // Update status indicator
+    updateProviderStatus(providerFamily);
+
+    // Update card display
+    const modelDisplay = document.getElementById(`${providerFamily}-current-model`);
+    if (modelDisplay) {
+        const modelText = modelSelect.options[modelSelect.selectedIndex].text;
+        modelDisplay.textContent = modelText.replace(/^(GPT-|Claude |Gemini |Grok )/i, '');
+    }
 
     alert('Settings saved! Note: Keys are stored locally in your browser. You\'ll need to reload the page for changes to take effect.');
 
@@ -762,6 +883,51 @@ function addReferenceDocument() {
 }
 
 // Upload document file
+// Handle document upload from new upload zone
+async function handleDocumentUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of files) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE}/upload/document`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Upload failed');
+            }
+
+            // Create new document with uploaded content
+            const docId = Date.now() + Math.random();
+            const doc = {
+                id: docId,
+                title: data.filename,
+                content: data.content,
+                metadata: data.metadata || {}
+            };
+
+            referenceDocuments.push(doc);
+            renderReferenceDocuments();
+            saveReferenceDocuments();
+
+            console.log(`✅ Uploaded: ${data.filename}`);
+        } catch (error) {
+            console.error(`❌ Upload failed for ${file.name}:`, error);
+            alert(`Failed to upload ${file.name}: ${error.message}`);
+        }
+    }
+
+    // Reset input
+    event.target.value = '';
+}
+
 async function uploadDocument() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -926,15 +1092,26 @@ function renderReferenceDocuments() {
     container.innerHTML = html;
 }
 
-// Get active providers
+// Get active providers (using the enabledProviders Set)
 function getActiveProviders() {
     const providers = [];
 
-    if (document.getElementById('openai-enabled')?.checked) providers.push('openai-gpt4.1');
-    if (document.getElementById('claude-enabled')?.checked) providers.push('claude-sonnet-4.5');
-    if (document.getElementById('gemini-enabled')?.checked) providers.push('gemini-2.5-flash');
-    if (document.getElementById('grok-enabled')?.checked) providers.push('grok-4');
+    // Map from provider family to backend-compatible model IDs
+    const providerModelMap = {
+        'openai': 'openai-gpt5.1',
+        'claude': 'claude-sonnet-4.5',
+        'gemini': 'gemini-2.5-pro',
+        'grok': 'grok-4-1-fast'
+    };
 
+    // Check enabledProviders Set and add corresponding model IDs
+    enabledProviders.forEach(providerId => {
+        if (providerModelMap[providerId]) {
+            providers.push(providerModelMap[providerId]);
+        }
+    });
+
+    console.log('Active providers for API call:', providers);
     return providers;
 }
 
@@ -1037,10 +1214,23 @@ function addContextChangeIndicator(providerId, message) {
 
 // Add message to chat panel
 function addMessage(providerId, role, content, isError = false) {
+    console.log('=== addMessage DEBUG ===');
+    console.log('Provider ID:', providerId);
+    console.log('Role:', role);
+    console.log('Content length:', content?.length || 0);
+    console.log('Content type:', typeof content);
+    console.log('Content value:', content);
+    console.log('Is error:', isError);
+
     const provider = PROVIDER_MAP[providerId];
-    if (!provider) return;
+    if (!provider) {
+        console.error('Provider not found in PROVIDER_MAP:', providerId);
+        return;
+    }
 
     const messagesContainer = document.getElementById(provider.messagesId);
+    console.log('Messages container ID:', provider.messagesId);
+    console.log('Messages container element:', messagesContainer);
 
     // Remove empty state if exists
     const emptyState = messagesContainer.querySelector('.empty-state');
@@ -1206,10 +1396,13 @@ async function sendToProvider(providerId, message, systemContext) {
     const startTime = Date.now();
     const loadingIndicator = addLoadingIndicator(providerId);
 
+    // Extract provider family from full provider ID (e.g., "openai-gpt5.1" -> "openai")
+    const providerFamily = providerId.split('-')[0];
+
     // Get provider-specific configuration
-    const model = document.getElementById(`${providerId}-model`)?.value;
-    const temperature = parseFloat(document.getElementById(`${providerId}-temp`)?.value || '1.0');
-    const apiKey = document.getElementById(`${providerId}-key`)?.value?.trim();
+    const model = document.getElementById(`${providerFamily}-model`)?.value;
+    const temperature = parseFloat(document.getElementById(`${providerFamily}-temp`)?.value || '1.0');
+    const apiKey = document.getElementById(`${providerFamily}-key`)?.value?.trim();
 
     try {
         const requestBody = {
@@ -1236,16 +1429,32 @@ async function sendToProvider(providerId, message, systemContext) {
         const data = await response.json();
         const timeMs = Date.now() - startTime;
 
+        console.log('=== BACKEND RESPONSE DEBUG ===');
+        console.log('Provider ID:', providerId);
+        console.log('Response OK:', response.ok);
+        console.log('Response status:', response.status);
+        console.log('Data received:', data);
+        console.log('Reply field:', data.reply);
+        console.log('Reply type:', typeof data.reply);
+        console.log('Reply length:', data.reply?.length || 0);
+
         // Remove loading indicator
         if (loadingIndicator) {
             loadingIndicator.remove();
         }
 
+        // Check for HTTP errors
         if (!response.ok) {
             throw new Error(data.detail || data.error || 'Request failed');
         }
 
+        // Check for API errors (success: false in response body)
+        if (data.success === false || data.error) {
+            throw new Error(data.error || 'API request failed');
+        }
+
         // Add assistant response
+        console.log('About to call addMessage with reply:', data.reply);
         addMessage(providerId, 'assistant', data.reply);
 
         // Update conversation history
@@ -1462,16 +1671,16 @@ window.undoClearChats = function() {
 // Toggle layout between quad split and 4 columns
 function toggleLayout() {
     const chatGrid = document.querySelector('.chat-grid');
-    const toggleBtn = document.getElementById('layout-toggle');
+    const toggleBtnSettings = document.getElementById('layout-toggle-settings');
 
     isColumnsLayout = !isColumnsLayout;
 
     if (isColumnsLayout) {
         chatGrid.classList.add('columns-layout');
-        toggleBtn.textContent = 'Switch to Quad Split';
+        if (toggleBtnSettings) toggleBtnSettings.textContent = 'Switch to Quad Split';
     } else {
         chatGrid.classList.remove('columns-layout');
-        toggleBtn.textContent = 'Switch to 4 Columns';
+        if (toggleBtnSettings) toggleBtnSettings.textContent = 'Switch to 4 Columns';
     }
 
     localStorage.setItem('asher-layout', isColumnsLayout ? 'columns' : 'quad');
@@ -1482,17 +1691,17 @@ function loadLayoutPreference() {
     const savedLayout = localStorage.getItem('asher-layout');
     if (savedLayout === 'columns') {
         const chatGrid = document.querySelector('.chat-grid');
-        const toggleBtn = document.getElementById('layout-toggle');
+        const toggleBtnSettings = document.getElementById('layout-toggle-settings');
 
         isColumnsLayout = true;
         chatGrid.classList.add('columns-layout');
-        toggleBtn.textContent = 'Switch to Quad Split';
+        if (toggleBtnSettings) toggleBtnSettings.textContent = 'Switch to Quad Split';
     }
 }
 
 // Toggle synchronized scrolling
 function toggleSyncScroll() {
-    const checkbox = document.getElementById('sync-scroll');
+    const checkbox = document.getElementById('sync-scroll-settings');
     isSyncScrollEnabled = checkbox.checked;
 
     const messageContainers = [
@@ -1562,8 +1771,136 @@ function toggleConfigPanel() {
 }
 
 // Provider Accordion Functions
+// Open provider configuration modal (for new card UI)
+function openProviderModal(providerId) {
+    const modal = document.getElementById('api-key-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modelSelect = document.getElementById('model-select');
+    const disableBtn = document.getElementById('disable-provider-btn');
+
+    // Map provider names
+    const providerNames = {
+        'openai': 'ChatGPT',
+        'claude': 'Claude',
+        'gemini': 'Gemini',
+        'grok': 'Grok'
+    };
+
+    // Set modal content
+    modalTitle.textContent = `Configure ${providerNames[providerId]}`;
+
+    // Get models for this provider
+    const modelSelectEl = document.getElementById(`${providerId}-model`);
+    if (modelSelectEl) {
+        modelSelect.innerHTML = modelSelectEl.innerHTML;
+        modelSelect.value = modelSelectEl.value;
+    }
+
+    // Check if provider is active
+    const card = document.querySelector(`.provider-card[data-provider="${providerId}"]`);
+    const isActive = card && card.classList.contains('active');
+
+    // Show/hide disable button based on active state
+    if (disableBtn) {
+        disableBtn.style.display = isActive ? 'block' : 'none';
+    }
+
+    // Store current provider for saving
+    modal.dataset.currentProvider = providerId;
+    currentProviderId = providerId;
+
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+// Save provider configuration and enable it
+function saveProviderConfig() {
+    console.log('saveProviderConfig called');
+    const modal = document.getElementById('api-key-modal');
+    const providerId = modal.dataset.currentProvider || currentProviderId;
+    console.log('Provider ID:', providerId);
+
+    if (!providerId) {
+        console.error('No provider ID found');
+        return;
+    }
+
+    const modelSelect = document.getElementById('model-select');
+    const selectedModel = modelSelect.value;
+    console.log('Selected model:', selectedModel);
+
+    // Save selected model preference
+    localStorage.setItem(`provider-${providerId}-model`, selectedModel);
+
+    // Update the actual model select in the hidden config (if it exists)
+    try {
+        const actualModelSelect = document.getElementById(`${providerId}-model`);
+        if (actualModelSelect) {
+            actualModelSelect.value = selectedModel;
+        }
+    } catch (e) {
+        console.warn('Could not update hidden model select:', e);
+    }
+
+    // Update card display
+    try {
+        const modelDisplay = document.getElementById(`${providerId}-current-model`);
+        if (modelDisplay && modelSelect.selectedIndex >= 0) {
+            const modelText = modelSelect.options[modelSelect.selectedIndex].text;
+            modelDisplay.textContent = modelText.replace(/^(GPT-|Claude |Gemini |Grok )/i, '');
+        }
+    } catch (e) {
+        console.warn('Could not update card display:', e);
+    }
+
+    // Add active class to card
+    const card = document.querySelector(`.provider-card[data-provider="${providerId}"]`);
+    console.log('Card found:', card);
+    if (card) {
+        card.classList.add('active');
+        console.log('Added active class to card');
+    }
+
+    // Enable the provider (but don't persist to localStorage)
+    enabledProviders.add(providerId);
+
+    // Show panel
+    const panel = document.getElementById(`panel-${providerId}`);
+    if (panel) {
+        panel.classList.add('provider-active');
+    }
+
+    closeApiKeyModal();
+    console.log('Modal closed, provider should be active');
+}
+
+// Disable provider
+function disableProvider() {
+    const modal = document.getElementById('api-key-modal');
+    const providerId = modal.dataset.currentProvider || currentProviderId;
+
+    // Remove active class from card
+    const card = document.querySelector(`.provider-card[data-provider="${providerId}"]`);
+    if (card) {
+        card.classList.remove('active');
+    }
+
+    // Disable the provider
+    enabledProviders.delete(providerId);
+
+    // Hide panel
+    const panel = document.getElementById(`panel-${providerId}`);
+    if (panel) {
+        panel.classList.remove('provider-active');
+    }
+
+    closeApiKeyModal();
+}
+
 function toggleProviderConfig(providerId) {
     const providerItem = document.querySelector(`.provider-item[data-provider="${providerId}"]`);
+    if (!providerItem) return;
+
     const isExpanded = providerItem.classList.contains('expanded');
 
     // Close all other providers
@@ -1651,6 +1988,16 @@ function loadProviderConfigs() {
         const modelSelect = document.getElementById(`${provider}-model`);
         if (savedModel && modelSelect) {
             modelSelect.value = savedModel;
+
+            // Update card display
+            const modelDisplay = document.getElementById(`${provider}-current-model`);
+            if (modelDisplay) {
+                const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                if (selectedOption) {
+                    const modelText = selectedOption.text;
+                    modelDisplay.textContent = modelText.replace(/^(GPT-|Claude |Gemini |Grok )/i, '');
+                }
+            }
         }
 
         // Load temperature
@@ -1695,8 +2042,8 @@ function checkStorageQuota() {
     }
 }
 
-// Save provider configuration when changed
-function saveProviderConfig(providerId, field, value) {
+// Save provider configuration field when changed (for individual settings)
+function saveProviderConfigField(providerId, field, value) {
     try {
         localStorage.setItem(`provider-${providerId}-${field}`, value);
     } catch (error) {
@@ -1718,7 +2065,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modelSelect = document.getElementById(`${provider}-model`);
         if (modelSelect) {
             modelSelect.addEventListener('change', (e) => {
-                saveProviderConfig(provider, 'model', e.target.value);
+                saveProviderConfigField(provider, 'model', e.target.value);
             });
         }
 
@@ -1727,7 +2074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tempInput) {
             // Debounced save function (300ms delay)
             const debouncedSave = debounce((value) => {
-                saveProviderConfig(provider, 'temp', value);
+                saveProviderConfigField(provider, 'temp', value);
             }, 300);
 
             // Update display immediately, save with debounce
@@ -1741,7 +2088,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyInput = document.getElementById(`${provider}-key`);
         if (keyInput) {
             keyInput.addEventListener('blur', (e) => {
-                saveProviderConfig(provider, 'key', e.target.value);
+                saveProviderConfigField(provider, 'key', e.target.value);
                 updateProviderStatus(provider);
             });
 
