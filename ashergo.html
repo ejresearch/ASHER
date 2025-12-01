@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AsherGO - AI Provider Testing</title>
+    <link rel="stylesheet" href="css/styles.css?v=21">
+    <link rel="stylesheet" href="css/mobile.css?v=21">
+    <style>
+        /* AsherGO - Clean styles matching original ASHER */
+
+        /* Auth Screen */
+        .auth-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 0.25rem;
+            font-weight: 800;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .auth-form h2 {
+            font-size: 1.125rem;
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+        }
+
+        .trial-notice {
+            color: var(--sage);
+            font-size: 0.8rem;
+            margin-top: -0.75rem;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 103, 177, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .auth-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .auth-btn:active {
+            transform: scale(0.98);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1.25rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .auth-switch a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-error {
+            color: var(--openai);
+            font-size: 0.8rem;
+            margin-top: 0.75rem;
+            text-align: center;
+        }
+
+        /* Main App Layout */
+        .main-app {
+            display: flex;
+            height: 100vh;
+            background: var(--bg-secondary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--bg-tertiary);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar.collapsed {
+            margin-left: -240px;
+            min-width: 0;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .home-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+            border: none;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .home-btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.05);
+        }
+
+        .collapse-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            transition: all 0.2s;
+        }
+
+        .collapse-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--accent);
+        }
+
+        .sidebar-conversations {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .new-convo-btn {
+            width: 100%;
+            padding: 0.6rem;
+            background: transparent;
+            border: 1px dashed var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .new-convo-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(79, 103, 177, 0.05);
+        }
+
+        .conversation-item {
+            padding: 0.6rem 0.75rem;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s;
+        }
+
+        .conversation-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .conversation-item.active {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+        }
+
+        .conversation-item .title {
+            font-size: 0.8rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .conversation-item .delete-btn {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 0.25rem;
+            transition: opacity 0.15s;
+        }
+
+        .conversation-item:hover .delete-btn {
+            opacity: 0.5;
+        }
+
+        .conversation-item .delete-btn:hover {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            padding: 0.75rem;
+            border-top: 1px solid var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+        }
+
+        .settings-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .settings-btn svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .settings-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .sidebar-toggle.visible {
+            display: flex;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .tab {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            overflow: hidden;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+        }
+
+        .tab-logo {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        .tab.active .tab-logo {
+            filter: brightness(0) invert(1);
+        }
+
+        .tab.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .tab.disabled .tab-logo {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
+
+        .docs-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .docs-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-secondary);
+        }
+
+        .empty-state-main {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-main h2 {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-main p {
+            font-size: 0.875rem;
+        }
+
+        /* Single View */
+        .single-view {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .single-view .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Grid View */
+        .grid-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            height: 100%;
+        }
+
+        .grid-view .chat-panel {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .grid-view .panel-header {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .grid-view .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+
+        /* Message Bubbles - matching original ASHER */
+        .message-bubble {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            line-height: 1.55;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .message-bubble.user {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-bubble.assistant {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-bubble.loading {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .message-bubble.error {
+            background: rgba(216, 112, 79, 0.1);
+            color: var(--openai);
+            border: 1px solid rgba(216, 112, 79, 0.2);
+        }
+
+        /* Input Bar */
+        .input-bar {
+            padding: 0.75rem 1rem;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--bg-tertiary);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .input-container textarea {
+            flex: 1;
+            padding: 0.65rem 0.9rem;
+            border: 1px solid var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .input-container textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            filter: brightness(1.1);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modals - matching original ASHER */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal.settings-modal {
+            max-width: 420px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .modal-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+            overflow-y: auto;
+            max-height: 55vh;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--bg-tertiary);
+        }
+
+        .modal-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            filter: brightness(1.1);
+        }
+
+        .modal-btn.secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.secondary:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-btn.danger {
+            background: var(--openai);
+            color: white;
+        }
+
+        .modal-btn.danger:hover {
+            filter: brightness(0.9);
+        }
+
+        /* Settings */
+        .settings-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-section h4 {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.35rem;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(79, 103, 177, 0.03);
+        }
+
+        .upload-zone svg {
+            margin-bottom: 0.35rem;
+            opacity: 0.6;
+        }
+
+        .doc-list {
+            margin-top: 0.75rem;
+        }
+
+        .doc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+        }
+
+        .doc-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .doc-remove {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 0.25rem;
+            margin-left: 0.5rem;
+        }
+
+        .doc-remove:hover {
+            color: var(--openai);
+        }
+
+        /* Theme Toggle Switch */
+        .theme-toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theme-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-tertiary);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .theme-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .theme-switch input:checked + .theme-slider {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+        }
+
+        .theme-switch input:checked + .theme-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Dark mode fixes */
+        [data-theme="dark"] .form-group input,
+        [data-theme="dark"] .form-group textarea,
+        [data-theme="dark"] .input-container textarea {
+            border-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .sidebar {
+            border-color: var(--bg-tertiary);
+        }
+
+        /* Make tab logos visible in dark mode */
+        [data-theme="dark"] .tab:not(.active) .tab-logo {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+
+        /* Provider Popover */
+        .provider-badge {
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        }
+
+        .provider-badge:hover {
+            transform: scale(1.1);
+        }
+
+        .provider-badge.disabled > .provider-badge-logo {
+            opacity: 0.35;
+            filter: grayscale(1);
+        }
+
+        .provider-popover {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--bg-tertiary);
+            padding: 0.75rem;
+            min-width: 180px;
+            z-index: 100;
+            display: none;
+        }
+
+        .provider-popover.visible {
+            display: block;
+        }
+
+        .provider-popover::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 12px;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--bg-tertiary);
+            border-top: 1px solid var(--bg-tertiary);
+            transform: rotate(45deg);
+        }
+
+        .popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .popover-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .provider-toggle {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .provider-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .provider-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-tertiary);
+            transition: 0.3s;
+            border-radius: 20px;
+        }
+
+        .provider-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .provider-toggle input:checked + .provider-toggle-slider {
+            background: linear-gradient(135deg, var(--openai) 0%, var(--claude) 50%, var(--grok) 100%);
+        }
+
+        .provider-toggle input:checked + .provider-toggle-slider:before {
+            transform: translateX(16px);
+        }
+
+        .popover-model-section {
+            margin-top: 0.5rem;
+        }
+
+        .popover-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.35rem;
+        }
+
+        .model-select {
+            width: 100%;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .model-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .model-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Panel header adjustments for popover positioning */
+        .panel-header-left {
+            position: relative;
+        }
+
+        /* Disabled panel styling */
+        .chat-panel.disabled {
+            opacity: 0.4;
+        }
+
+        .chat-panel.disabled .chat-messages {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login/Signup Screen -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>AsherGO</h1>
+                <p>AI Model Testing & Comparison</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <h2>Sign In</h2>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Your password">
+                </div>
+                <button type="submit" class="auth-btn primary">Sign In</button>
+                <p class="auth-switch">Don't have an account? <a href="#" onclick="showSignupForm()">Sign Up</a></p>
+                <div id="login-error" class="auth-error"></div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form" style="display: none;">
+                <h2>Create Account</h2>
+                <p class="trial-notice">Start your 7-day free trial</p>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required minlength="6" placeholder="At least 6 characters">
+                </div>
+                <button type="submit" class="auth-btn primary">Create Account</button>
+                <p class="auth-switch">Already have an account? <a href="#" onclick="showLoginForm()">Sign In</a></p>
+                <div id="signup-error" class="auth-error"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until authenticated) -->
+    <div id="main-app" class="main-app" style="display: none;">
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <button class="home-btn" onclick="goHome()" title="Home">A</button>
+                <button class="collapse-btn" onclick="toggleSidebar()" title="Collapse sidebar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-conversations">
+                <button class="new-convo-btn" onclick="openNewConvoModal()">+ New</button>
+                <div id="conversation-list" class="conversation-list">
+                    <!-- Conversations loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="settings-btn" onclick="openSettingsModal()" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tab Bar -->
+            <div class="tab-bar">
+                <button id="sidebar-toggle" class="sidebar-toggle" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="tabs">
+                    <button class="tab active" data-tab="all" onclick="switchTab('all')">All</button>
+                    <button class="tab" data-tab="1" onclick="switchTab('1')">
+                        <img src="images/logos/openai.webp" alt="OpenAI" class="tab-logo">
+                    </button>
+                    <button class="tab" data-tab="2" onclick="switchTab('2')">
+                        <img src="images/logos/claude.png" alt="Claude" class="tab-logo">
+                    </button>
+                    <button class="tab" data-tab="3" onclick="switchTab('3')">
+                        <img src="images/logos/gemini.png" alt="Gemini" class="tab-logo">
+                    </button>
+                    <button class="tab" data-tab="4" onclick="switchTab('4')">
+                        <img src="images/logos/grok.svg" alt="Grok" class="tab-logo">
+                    </button>
+                </div>
+                <button class="docs-btn" onclick="openDocsModal()" title="Prompt & Documents">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat Area -->
+            <div id="chat-area" class="chat-area">
+                <!-- Empty state when no conversation selected -->
+                <div id="empty-state" class="empty-state-main">
+                    <h2>Welcome to AsherGO</h2>
+                    <p>Select a conversation or create a new one to get started</p>
+                </div>
+
+                <!-- Single Provider View (hidden by default) -->
+                <div id="single-view" class="single-view" style="display: none;">
+                    <div class="chat-messages" id="single-messages"></div>
+                </div>
+
+                <!-- All Providers Grid View (hidden by default) -->
+                <div id="grid-view" class="grid-view" style="display: none;">
+                    <div class="chat-panel" id="panel-1">
+                        <div class="panel-header">
+                            <div class="panel-header-left">
+                                <div class="provider-badge openai" id="badge-1" onclick="toggleProviderPopover('1', event)">
+                                    <img src="images/logos/openai.webp" alt="OpenAI" class="provider-badge-logo">
+                                </div>
+                                <div class="provider-popover" id="popover-1">
+                                    <div class="popover-header">
+                                        <span class="popover-title">ChatGPT</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="toggle-1" checked onchange="toggleProvider('1')">
+                                            <span class="provider-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="popover-model-section">
+                                        <div class="popover-label">Model</div>
+                                        <select class="model-select" id="model-1" onchange="setProviderModel('1', this.value)">
+                                            <option value="gpt-5.1">GPT-5.1</option>
+                                            <option value="gpt-5">GPT-5</option>
+                                            <option value="gpt-5-mini">GPT-5 Mini</option>
+                                            <option value="gpt-4.1">GPT-4.1</option>
+                                            <option value="gpt-4o">GPT-4o</option>
+                                            <option value="o3">o3 (Reasoning)</option>
+                                            <option value="o4-mini">o4-mini (Reasoning)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="messages-1"></div>
+                    </div>
+                    <div class="chat-panel" id="panel-2">
+                        <div class="panel-header">
+                            <div class="panel-header-left">
+                                <div class="provider-badge claude" id="badge-2" onclick="toggleProviderPopover('2', event)">
+                                    <img src="images/logos/claude.png" alt="Claude" class="provider-badge-logo">
+                                </div>
+                                <div class="provider-popover" id="popover-2">
+                                    <div class="popover-header">
+                                        <span class="popover-title">Claude</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="toggle-2" checked onchange="toggleProvider('2')">
+                                            <span class="provider-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="popover-model-section">
+                                        <div class="popover-label">Model</div>
+                                        <select class="model-select" id="model-2" onchange="setProviderModel('2', this.value)">
+                                            <option value="claude-sonnet-4.5">Claude Sonnet 4.5</option>
+                                            <option value="claude-haiku-4.5">Claude Haiku 4.5</option>
+                                            <option value="claude-opus-4.1">Claude Opus 4.1</option>
+                                            <option value="claude-opus-4">Claude Opus 4</option>
+                                            <option value="claude-sonnet-4">Claude Sonnet 4</option>
+                                            <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                            <option value="claude-3-opus">Claude 3 Opus</option>
+                                            <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="messages-2"></div>
+                    </div>
+                    <div class="chat-panel" id="panel-3">
+                        <div class="panel-header">
+                            <div class="panel-header-left">
+                                <div class="provider-badge gemini" id="badge-3" onclick="toggleProviderPopover('3', event)">
+                                    <img src="images/logos/gemini.png" alt="Gemini" class="provider-badge-logo">
+                                </div>
+                                <div class="provider-popover" id="popover-3">
+                                    <div class="popover-header">
+                                        <span class="popover-title">Gemini</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="toggle-3" checked onchange="toggleProvider('3')">
+                                            <span class="provider-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="popover-model-section">
+                                        <div class="popover-label">Model</div>
+                                        <select class="model-select" id="model-3" onchange="setProviderModel('3', this.value)">
+                                            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="messages-3"></div>
+                    </div>
+                    <div class="chat-panel" id="panel-4">
+                        <div class="panel-header">
+                            <div class="panel-header-left">
+                                <div class="provider-badge grok" id="badge-4" onclick="toggleProviderPopover('4', event)">
+                                    <img src="images/logos/grok.svg" alt="Grok" class="provider-badge-logo">
+                                </div>
+                                <div class="provider-popover" id="popover-4">
+                                    <div class="popover-header">
+                                        <span class="popover-title">Grok</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="toggle-4" checked onchange="toggleProvider('4')">
+                                            <span class="provider-toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="popover-model-section">
+                                        <div class="popover-label">Model</div>
+                                        <select class="model-select" id="model-4" onchange="setProviderModel('4', this.value)">
+                                            <option value="grok-4.1-fast">Grok 4.1 Fast</option>
+                                            <option value="grok-4">Grok 4</option>
+                                            <option value="grok-3">Grok 3</option>
+                                            <option value="grok-beta">Grok Beta</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="messages-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div id="input-bar" class="input-bar" style="display: none;">
+                <div class="input-container">
+                    <textarea id="message-input" rows="1" placeholder="Message AsherGO..."></textarea>
+                    <button class="send-btn" onclick="sendMessage()" id="send-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Conversation Modal -->
+    <div id="new-convo-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>New Conversation</h3>
+                <button class="modal-close" onclick="closeNewConvoModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="convo-title">Conversation Name</label>
+                    <input type="text" id="convo-title" placeholder="e.g., Project Research" autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeNewConvoModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="createConversation()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt/Docs Modal -->
+    <div id="docs-modal" class="modal-overlay" style="display: none;">
+        <div class="modal docs-modal">
+            <div class="modal-header">
+                <h3>Prompt & Documents</h3>
+                <button class="modal-close" onclick="closeDocsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" rows="4" placeholder="Enter system instructions...">You are a helpful AI assistant. Provide clear, accurate, and concise responses.</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Reference Documents</label>
+                    <div class="upload-zone" onclick="document.getElementById('doc-upload').click()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Click to upload documents</span>
+                    </div>
+                    <input type="file" id="doc-upload" style="display: none;" multiple accept=".pdf,.docx,.txt,.md">
+                    <div id="doc-list" class="doc-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="closeDocsModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal settings-modal">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- API Keys -->
+                <div class="settings-section">
+                    <h4>API Keys</h4>
+                    <div class="form-group">
+                        <label for="openai-key">OpenAI (ChatGPT)</label>
+                        <input type="password" id="openai-key" placeholder="sk-...">
+                    </div>
+                    <div class="form-group">
+                        <label for="anthropic-key">Anthropic (Claude)</label>
+                        <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+                    </div>
+                    <div class="form-group">
+                        <label for="google-key">Google (Gemini)</label>
+                        <input type="password" id="google-key" placeholder="AIza...">
+                    </div>
+                    <div class="form-group">
+                        <label for="xai-key">xAI (Grok)</label>
+                        <input type="password" id="xai-key" placeholder="xai-...">
+                    </div>
+                </div>
+
+                <!-- Theme -->
+                <div class="settings-section">
+                    <h4>Appearance</h4>
+                    <div class="theme-toggle-row">
+                        <span>Dark Mode</span>
+                        <label class="theme-switch">
+                            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                            <span class="theme-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Account -->
+                <div class="settings-section">
+                    <h4>Account</h4>
+                    <p id="user-email" class="user-info"></p>
+                    <p id="subscription-status" class="user-info"></p>
+                    <button class="modal-btn danger" onclick="logout()">Sign Out</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ashergo.js?v=2"></script>
+</body>
+</html>

@@ -21,6 +21,11 @@ from ai_providers import AIProviderManager
 from document_parser import DocumentParser
 from document_storage import DocumentStorage
 
+# Import AsherGO routes
+from routes_auth import router as auth_router
+from routes_conversations import router as conversations_router
+from routes_messages import router as messages_router
+
 # Initialize persistent document storage
 document_storage = DocumentStorage(storage_path="data/documents.json")
 
@@ -40,6 +45,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include AsherGO routers
+app.include_router(auth_router)
+app.include_router(conversations_router)
+app.include_router(messages_router)
+
 # Mount static files (frontend)
 # Get the parent directory (ASHER root)
 import pathlib
@@ -52,6 +62,14 @@ from fastapi.responses import FileResponse
 @app.get("/index.html")
 async def serve_index():
     return FileResponse(str(parent_dir / "index.html"))
+
+@app.get("/go")
+async def serve_ashergo():
+    return FileResponse(str(parent_dir / "ashergo.html"))
+
+@app.get("/ashergo.html")
+async def serve_ashergo_html():
+    return FileResponse(str(parent_dir / "ashergo.html"))
 
 @app.get("/manifest.json")
 async def serve_manifest():
