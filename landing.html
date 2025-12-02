@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASHERgo - AI Testing Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            /* Blue to terracotta gradient */
+            background: linear-gradient(135deg, #4F67B1 0%, #D8704F 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            width: 100%;
+            gap: 4rem;
+        }
+
+        .branding {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-size: 6rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.15em;
+            line-height: 1;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', 'Nunito', -apple-system, sans-serif;
+        }
+
+        .logo .go {
+            font-weight: 400;
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.8);
+            vertical-align: baseline;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 1rem;
+            font-weight: 400;
+        }
+
+        .provider-carousel {
+            position: relative;
+            width: 1.8rem;
+            height: 1.8rem;
+            align-self: flex-end;
+            margin-bottom: 0.7rem;
+        }
+
+        .provider-icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .provider-icon.active {
+            opacity: 1;
+        }
+
+        .provider-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .plans {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .plan-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 280px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .plan-card.premium {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .plan-card.premium:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(79, 103, 177, 0.5);
+            box-shadow: 0 20px 48px rgba(79, 103, 177, 0.25);
+        }
+
+        .plan-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .plan-card.free .plan-badge {
+            background: #A8B4A5;
+            color: #2A2622;
+        }
+
+        .plan-card.premium .plan-badge {
+            background: linear-gradient(135deg, #4F67B1, #D8704F);
+            color: #fff;
+        }
+
+        .plan-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #2A2622;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2A2622;
+            margin-bottom: 0.25rem;
+        }
+
+        .plan-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #8B8178;
+        }
+
+        .plan-desc {
+            font-size: 0.9rem;
+            color: #8B8178;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .plan-features {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-features li {
+            list-style: none;
+            color: #2A2622;
+            font-size: 0.85rem;
+            padding: 0.4rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .plan-features li::before {
+            content: "✓";
+            color: #4F67B1;
+            font-weight: bold;
+        }
+
+        .plan-btn {
+            display: block;
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .plan-card.free .plan-btn {
+            background: #2A2622;
+            color: #F5F1E8;
+        }
+
+        .plan-card.free:hover .plan-btn {
+            background: #3A3530;
+        }
+
+        .plan-card.premium .plan-btn {
+            background: #2A2622;
+            color: #F5F1E8;
+        }
+
+        .plan-card.premium:hover .plan-btn {
+            filter: brightness(1.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                text-align: center;
+                gap: 3rem;
+            }
+
+            .logo {
+                font-size: 4rem;
+            }
+
+            .logo .go {
+                font-size: 2.5rem;
+            }
+
+            .plans {
+                flex-direction: column;
+            }
+
+            .plan-card {
+                width: 100%;
+                max-width: 320px;
+            }
+        }
+
+        /* Floating particles effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Login button in header */
+        .header-login {
+            position: fixed;
+            top: 1.5rem;
+            right: 2rem;
+            z-index: 100;
+        }
+
+        .header-login-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .header-login-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Demo Password Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .modal h3 {
+            font-size: 1.25rem;
+            color: #2A2622;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal p {
+            color: #8B8178;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #E8E4DE;
+            border-radius: 12px;
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #4F67B1;
+        }
+
+        .modal-error {
+            color: #D8704F;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            min-height: 1.2em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.cancel {
+            background: #E8E4DE;
+            color: #2A2622;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #D8D4CE;
+        }
+
+        .modal-btn.submit {
+            background: #2A2622;
+            color: #F5F1E8;
+        }
+
+        .modal-btn.submit:hover {
+            background: #3A3530;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <!-- Login button in upper right for existing users -->
+    <div class="header-login">
+        <a href="auth.html" class="header-login-btn" onclick="localStorage.setItem('asher_show_login', 'true')">Log In</a>
+    </div>
+
+    <div class="container">
+        <div class="branding">
+            <h1 class="logo">ASHER</h1>
+            <div class="provider-carousel">
+                <div class="provider-icon active" id="provider-openai">
+                    <img src="images/logos/openai.webp" alt="OpenAI">
+                </div>
+                <div class="provider-icon" id="provider-anthropic">
+                    <img src="images/logos/claude.png" alt="Claude">
+                </div>
+                <div class="provider-icon" id="provider-google">
+                    <img src="images/logos/gemini.png" alt="Gemini">
+                </div>
+                <div class="provider-icon" id="provider-xai">
+                    <img src="images/logos/grok.svg" alt="Grok">
+                </div>
+            </div>
+        </div>
+
+        <div class="plans">
+            <div class="plan-card free" onclick="showDemoPasswordModal()" style="cursor: pointer;">
+                <div class="plan-price">Beta</div>
+                <p class="plan-desc">Open to testers</p>
+                <ul class="plan-features">
+                    <li>4 AI providers</li>
+                    <li>Side-by-side comparison</li>
+                    <li>Document upload</li>
+                    <li>System prompts</li>
+                    <li>Bring your own keys</li>
+                </ul>
+                <div class="plan-btn">Get Started</div>
+            </div>
+
+            <a href="auth.html" class="plan-card premium">
+                <div class="plan-price">BYOK</div>
+                <p class="plan-desc">Bring your own keys</p>
+                <ul class="plan-features">
+                    <li>Everything in Beta</li>
+                    <li>Cloud conversation history</li>
+                    <li>Secure API key storage</li>
+                    <li>Sync across devices</li>
+                    <li>User accounts</li>
+                </ul>
+                <div class="plan-btn">Jump In</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Demo Password Modal -->
+    <div id="demo-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <h3>Enter Demo Password</h3>
+            <p>Please enter the same password used for the Sandbox.</p>
+            <input type="password" id="demo-password" placeholder="Enter password" autofocus>
+            <div id="demo-error" class="modal-error"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeDemoModal()">Cancel</button>
+                <button class="modal-btn submit" onclick="checkDemoPassword()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo password modal
+        function showDemoPasswordModal() {
+            document.getElementById('demo-modal').style.display = 'flex';
+            document.getElementById('demo-password').value = '';
+            document.getElementById('demo-error').textContent = '';
+            document.getElementById('demo-password').focus();
+        }
+
+        function closeDemoModal() {
+            document.getElementById('demo-modal').style.display = 'none';
+        }
+
+        function checkDemoPassword() {
+            const password = document.getElementById('demo-password').value;
+            if (password === 'ytresearch23') {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('demo-error').textContent = 'Incorrect password. Please try again.';
+                document.getElementById('demo-password').value = '';
+                document.getElementById('demo-password').focus();
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('demo-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkDemoPassword();
+            }
+        });
+
+        // Close modal on clicking outside
+        document.getElementById('demo-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'demo-modal') {
+                closeDemoModal();
+            }
+        });
+
+        // Create floating particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Provider logo carousel
+        const providers = document.querySelectorAll('.provider-icon');
+        let currentIndex = 0;
+
+        function cycleProviders() {
+            providers.forEach(p => p.classList.remove('active'));
+            currentIndex = (currentIndex + 1) % providers.length;
+            providers[currentIndex].classList.add('active');
+        }
+
+        setInterval(cycleProviders, 1000);
+    </script>
+</body>
+</html>

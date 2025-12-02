@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASHERgo - Sign In</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #4F67B1 0%, #D8704F 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1100px;
+            width: 100%;
+            gap: 4rem;
+        }
+
+        .branding {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-size: 5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.15em;
+            line-height: 1;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', 'Nunito', -apple-system, sans-serif;
+        }
+
+        .provider-carousel {
+            position: relative;
+            width: 1.5rem;
+            height: 1.5rem;
+            align-self: flex-end;
+            margin-bottom: 0.5rem;
+        }
+
+        .provider-icon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .provider-icon.active {
+            opacity: 1;
+        }
+
+        .provider-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 0.75rem;
+            font-weight: 400;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        /* Auth Card */
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 1.75rem;
+            width: 340px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .auth-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2A2622;
+            margin-bottom: 0.25rem;
+        }
+
+        .auth-header p {
+            color: #8B8178;
+            font-size: 0.8rem;
+        }
+
+        .trial-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4F67B1, #D8704F);
+            color: #fff;
+            padding: 0.3rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        /* Form Styles */
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 0.9rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2A2622;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem 0.85rem;
+            border: 2px solid #E8E4DE;
+            border-radius: 10px;
+            background: #FAFAF8;
+            color: #2A2622;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4F67B1;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(79, 103, 177, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #B8B0A8;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            background: #2A2622;
+            color: #F5F1E8;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.35rem;
+        }
+
+        .auth-btn:hover {
+            filter: brightness(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 103, 177, 0.3);
+        }
+
+        .auth-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+            color: #8B8178;
+            font-size: 0.8rem;
+        }
+
+        .auth-switch a {
+            color: #4F67B1;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            color: #D8704F;
+            font-size: 0.8rem;
+            margin-top: 0.75rem;
+            text-align: center;
+            min-height: 1.2em;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: #B8B0A8;
+            font-size: 0.8rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E8E4DE;
+        }
+
+        .auth-divider span {
+            padding: 0 1rem;
+        }
+
+        /* Features List */
+        .features-list {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E8E4DE;
+        }
+
+        .features-list h4 {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #8B8178;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .features-list ul {
+            list-style: none;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #2A2622;
+            font-size: 0.75rem;
+            padding: 0.25rem 0;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: #4F67B1;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                text-align: center;
+                gap: 2.5rem;
+            }
+
+            .branding {
+                align-items: center;
+            }
+
+            .logo {
+                font-size: 3.5rem;
+            }
+
+            .auth-card {
+                width: 100%;
+                max-width: 380px;
+            }
+
+            .back-link {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="branding">
+            <div class="logo-row">
+                <h1 class="logo">ASHER</h1>
+                <div class="provider-carousel">
+                    <div class="provider-icon active" id="provider-openai">
+                        <img src="images/logos/openai.webp" alt="OpenAI">
+                    </div>
+                    <div class="provider-icon" id="provider-anthropic">
+                        <img src="images/logos/claude.png" alt="Claude">
+                    </div>
+                    <div class="provider-icon" id="provider-google">
+                        <img src="images/logos/gemini.png" alt="Gemini">
+                    </div>
+                    <div class="provider-icon" id="provider-xai">
+                        <img src="images/logos/grok.svg" alt="Grok">
+                    </div>
+                </div>
+            </div>
+            <p class="tagline">Compare AI models side by side</p>
+            <a href="landing.html" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back to plans
+            </a>
+        </div>
+
+        <div class="auth-card">
+            <!-- Create Account Form (shown by default for "Start Free Trial") -->
+            <form id="signup-form" class="auth-form active">
+                <div class="auth-header">
+                    <h2>Create Your Account</h2>
+                    <p>Bring your own API keys</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-name">First Name</label>
+                    <input type="text" id="signup-name" required placeholder="Your first name">
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required minlength="6" placeholder="At least 6 characters">
+                </div>
+
+                <button type="submit" class="auth-btn">Jump In</button>
+
+                <p class="auth-switch">Already have an account? <a onclick="showLoginForm()">Sign In</a></p>
+                <div id="signup-error" class="auth-error"></div>
+
+                <div class="features-list">
+                    <h4>What's included</h4>
+                    <ul>
+                        <li>Cloud conversation history</li>
+                        <li>Sync across all devices</li>
+                        <li>Secure API key storage</li>
+                        <li>Side-by-side AI comparison</li>
+                    </ul>
+                </div>
+            </form>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="auth-header">
+                    <h2>Welcome Back</h2>
+                    <p>Sign in to your account</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Your password">
+                </div>
+
+                <button type="submit" class="auth-btn">Sign In</button>
+
+                <p class="auth-switch">Don't have an account? <a onclick="showSignupForm()">Sign Up</a></p>
+                <div id="login-error" class="auth-error"></div>
+            </form>
+
+            <!-- Onboarding Form (API Keys Setup) -->
+            <form id="onboarding-form" class="auth-form">
+                <div class="auth-header">
+                    <h2>Set Up API Keys</h2>
+                    <p>Enter your keys or use beta token</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Option 1: Use Beta Token</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="beta-token" placeholder="Enter beta token">
+                        <button type="button" class="auth-btn" style="width: auto; padding: 0.7rem 1rem;" onclick="applyBetaToken()">Apply</button>
+                    </div>
+                    <div id="beta-token-status" style="font-size: 0.75rem; margin-top: 0.35rem; color: #4F67B1;"></div>
+                </div>
+
+                <div class="auth-divider"><span>OR</span></div>
+
+                <div class="form-group">
+                    <label>Option 2: Enter Your Own Keys</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="openai-key">OpenAI (ChatGPT)</label>
+                    <input type="password" id="openai-key" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label for="anthropic-key">Anthropic (Claude)</label>
+                    <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+                </div>
+                <div class="form-group">
+                    <label for="google-key">Google (Gemini)</label>
+                    <input type="password" id="google-key" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label for="xai-key">xAI (Grok)</label>
+                    <input type="password" id="xai-key" placeholder="xai-...">
+                </div>
+
+                <button type="submit" class="auth-btn">Save & Continue</button>
+                <button type="button" class="auth-btn" style="background: transparent; color: #8B8178; margin-top: 0.5rem;" onclick="skipOnboarding()">Skip for now</button>
+                <div id="onboarding-error" class="auth-error"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8002';
+
+        // Create floating particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Provider logo carousel
+        const providers = document.querySelectorAll('.provider-icon');
+        let currentIndex = 0;
+
+        function cycleProviders() {
+            providers.forEach(p => p.classList.remove('active'));
+            currentIndex = (currentIndex + 1) % providers.length;
+            providers[currentIndex].classList.add('active');
+        }
+
+        setInterval(cycleProviders, 1000);
+
+        // Form switching
+        function showLoginForm() {
+            document.getElementById('signup-form').classList.remove('active');
+            document.getElementById('login-form').classList.add('active');
+        }
+
+        function showSignupForm() {
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('signup-form').classList.add('active');
+        }
+
+        // Handle login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                localStorage.setItem('ashergo_token', data.token);
+                window.location.href = 'ashergo.html';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            }
+        });
+
+        // Handle signup - show onboarding after
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firstName = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const errorDiv = document.getElementById('signup-error');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, first_name: firstName })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Signup failed');
+                }
+
+                localStorage.setItem('ashergo_token', data.token);
+                // Show onboarding instead of redirecting
+                showOnboardingForm();
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            }
+        });
+
+        // Show onboarding form
+        function showOnboardingForm() {
+            document.getElementById('signup-form').classList.remove('active');
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('onboarding-form').classList.add('active');
+        }
+
+        // Apply beta token
+        async function applyBetaToken() {
+            const token = document.getElementById('beta-token').value;
+            const statusDiv = document.getElementById('beta-token-status');
+            const authToken = localStorage.getItem('ashergo_token');
+
+            if (!token) {
+                statusDiv.textContent = 'Please enter a token';
+                statusDiv.style.color = '#D8704F';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/apply-beta-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Invalid token');
+                }
+
+                statusDiv.textContent = '✓ Beta keys applied! Redirecting...';
+                statusDiv.style.color = '#4F67B1';
+                setTimeout(() => {
+                    window.location.href = 'ashergo.html';
+                }, 1000);
+            } catch (error) {
+                statusDiv.textContent = error.message;
+                statusDiv.style.color = '#D8704F';
+            }
+        }
+
+        // Handle onboarding form submission (manual API keys)
+        document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const authToken = localStorage.getItem('ashergo_token');
+            const errorDiv = document.getElementById('onboarding-error');
+
+            const openai = document.getElementById('openai-key').value;
+            const anthropic = document.getElementById('anthropic-key').value;
+            const google = document.getElementById('google-key').value;
+            const xai = document.getElementById('xai-key').value;
+
+            // Check if at least one key is provided
+            if (!openai && !anthropic && !google && !xai) {
+                errorDiv.textContent = 'Please enter at least one API key or use beta token';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/api-keys`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ openai, anthropic, google, xai })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to save keys');
+                }
+
+                window.location.href = 'ashergo.html';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            }
+        });
+
+        // Skip onboarding
+        function skipOnboarding() {
+            window.location.href = 'ashergo.html';
+        }
+
+        // Check if coming from "Log In" button on landing page
+        if (localStorage.getItem('asher_show_login') === 'true') {
+            localStorage.removeItem('asher_show_login');
+            showLoginForm();
+        }
+    </script>
+</body>
+</html>

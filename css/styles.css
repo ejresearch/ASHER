@@ -130,15 +130,14 @@ p {
     flex: 1;
 }
 
-.header-content h1 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: -0.02em;
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
     position: relative;
 }
 
-.header-content h1::after {
+.header-logo::after {
     content: '';
     position: absolute;
     right: -0.75rem;
@@ -148,6 +147,64 @@ p {
     height: 20px;
     background: var(--text-secondary);
     opacity: 0.3;
+}
+
+.header-content h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+}
+
+.header-provider-carousel {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    align-self: flex-end;
+    margin-bottom: 0.15rem;
+}
+
+.header-provider-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.header-provider-icon.active {
+    opacity: 1;
+}
+
+.header-provider-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Gradient-colored icons for header logo */
+.header-provider-icon:nth-child(1) img {
+    filter: brightness(0) saturate(100%) invert(52%) sepia(51%) saturate(526%) hue-rotate(333deg) brightness(91%) contrast(89%);
+}
+.header-provider-icon:nth-child(2) img {
+    filter: brightness(0) saturate(100%) invert(54%) sepia(27%) saturate(513%) hue-rotate(352deg) brightness(89%) contrast(86%);
+}
+.header-provider-icon:nth-child(3) img {
+    filter: brightness(0) saturate(100%) invert(58%) sepia(11%) saturate(684%) hue-rotate(131deg) brightness(92%) contrast(86%);
+}
+.header-provider-icon:nth-child(4) img {
+    filter: brightness(0) saturate(100%) invert(49%) sepia(15%) saturate(768%) hue-rotate(240deg) brightness(93%) contrast(87%);
+}
+
+/* Purple tint in dark mode to match theme */
+[data-theme="dark"] .header-provider-icon img {
+    filter: brightness(0) saturate(100%) invert(56%) sepia(32%) saturate(491%) hue-rotate(220deg) brightness(95%) contrast(89%);
+}
+
+.header-content h1::after {
+    display: none;
 }
 
 .header-content p {

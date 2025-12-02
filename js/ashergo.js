@@ -215,7 +215,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize provider UI with defaults
     initProviderUI();
+
+    // Start logo provider carousel rotation
+    startLogoCarousel();
 });
+
+// Logo provider carousel animation
+function startLogoCarousel() {
+    const carousels = [
+        document.querySelectorAll('.logo-provider-icon'),
+        document.querySelectorAll('.welcome-provider-icon')
+    ];
+
+    let currentIndex = 0;
+
+    setInterval(() => {
+        carousels.forEach(icons => {
+            if (icons.length > 0) {
+                icons.forEach(icon => icon.classList.remove('active'));
+                currentIndex = (currentIndex + 1) % icons.length;
+                icons[currentIndex].classList.add('active');
+            }
+        });
+    }, 1000);
+}
 
 // Theme
 function loadTheme() {
@@ -416,6 +439,12 @@ function loadUserInfo() {
             status = `Trial (${days} days left)`;
         }
         document.getElementById('subscription-status').textContent = `Status: ${status}`;
+
+        // Update welcome heading with user's first name
+        const welcomeHeading = document.getElementById('welcome-heading');
+        if (welcomeHeading && currentUser.first_name) {
+            welcomeHeading.textContent = `Hi, ${currentUser.first_name}! Welcome to AsherGO`;
+        }
     }
 }
 
@@ -557,6 +586,26 @@ function addMessageToPanel(panelNum, role, content) {
     container.scrollTop = container.scrollHeight;
 }
 
+// Build context from system prompt and reference documents
+function buildContext() {
+    const systemPrompt = document.getElementById('system-prompt').value.trim();
+
+    let context = systemPrompt;
+
+    // Add reference documents
+    if (referenceDocuments.length > 0) {
+        context += '\n\n=== REFERENCE DOCUMENTS ===\n\n';
+
+        referenceDocuments.forEach(doc => {
+            if (doc.content && doc.content.trim()) {
+                context += `--- ${doc.filename} ---\n${doc.content}\n\n`;
+            }
+        });
+    }
+
+    return context;
+}
+
 // Send Message
 async function sendMessage() {
     if (!currentConversation) {
@@ -573,7 +622,8 @@ async function sendMessage() {
     input.value = '';
     input.style.height = 'auto';
 
-    const systemPrompt = document.getElementById('system-prompt').value;
+    // Build context from system prompt AND reference documents
+    const systemContext = buildContext();
 
     // Debug: Log provider state at time of sending
     console.log('=== SENDING MESSAGE ===');
@@ -616,7 +666,7 @@ async function sendMessage() {
     const promises = activeProviderNums.map((num, index) => {
         const providerInfo = PROVIDER_INFO[num];
         const model = providerModels[num];
-        return sendToProvider(providerInfo.id, message, systemPrompt, num, index > 0, model);
+        return sendToProvider(providerInfo.id, message, systemContext, num, index > 0, model);
     });
     await Promise.all(promises);
 
@@ -665,7 +715,11 @@ async function sendToProvider(providerId, message, systemPrompt, panelNum, skipU
         }
     } catch (error) {
         removeLoadingFromPanel(panelNum);
-        if (currentTab === 'all') {
+
+        // Check if it's an API key error
+        if (error.message.includes('API key not configured')) {
+            showApiKeyAlert(error.message);
+        } else if (currentTab === 'all') {
             addMessageToPanel(panelNum, 'error', `Error: ${error.message}`);
         } else {
             const container = document.getElementById('single-messages');
@@ -675,6 +729,60 @@ async function sendToProvider(providerId, message, systemPrompt, panelNum, skipU
             container.appendChild(div);
         }
     }
+}
+
+// Track missing API keys to show combined alert
+let missingApiKeyProviders = new Set();
+let apiKeyAlertTimeout = null;
+
+// Show API key missing alert
+function showApiKeyAlert(message) {
+    // Extract provider name from message
+    let providerName = null;
+    if (message.includes('OpenAI')) providerName = 'ChatGPT';
+    else if (message.includes('Anthropic')) providerName = 'Claude';
+    else if (message.includes('Google')) providerName = 'Gemini';
+    else if (message.includes('xAI')) providerName = 'Grok';
+
+    if (providerName) {
+        missingApiKeyProviders.add(providerName);
+    }
+
+    // Debounce to collect all missing providers before showing alert
+    if (apiKeyAlertTimeout) {
+        clearTimeout(apiKeyAlertTimeout);
+    }
+
+    apiKeyAlertTimeout = setTimeout(() => {
+        const providers = Array.from(missingApiKeyProviders);
+        let displayText;
+
+        if (providers.length === 1) {
+            displayText = providers[0];
+        } else if (providers.length === 2) {
+            displayText = providers.join(' & ');
+        } else if (providers.length > 2) {
+            const last = providers.pop();
+            displayText = providers.join(', ') + ', & ' + last;
+        } else {
+            displayText = 'the selected providers';
+        }
+
+        document.getElementById('api-key-alert-provider').textContent = displayText;
+        document.getElementById('api-key-alert').style.display = 'flex';
+
+        // Reset for next time
+        missingApiKeyProviders.clear();
+    }, 300);
+}
+
+function closeApiKeyAlert() {
+    document.getElementById('api-key-alert').style.display = 'none';
+}
+
+function goToSettingsFromAlert() {
+    closeApiKeyAlert();
+    openSettingsModal();
 }
 
 function addLoadingToPanel(panelNum) {

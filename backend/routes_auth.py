@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str
+    first_name: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -63,7 +64,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
 
     # Get user from database
     user = query_one(
-        "SELECT id, email, subscription_status, trial_ends_at, created_at FROM users WHERE id = %s",
+        "SELECT id, email, first_name, subscription_status, trial_ends_at, created_at FROM users WHERE id = %s",
         (payload["user_id"],)
     )
 
@@ -94,14 +95,15 @@ async def signup(request: SignupRequest):
     # Create user
     password_hash = hash_password(request.password)
     trial_ends_at = get_trial_end_date()
+    first_name = request.first_name.strip() if request.first_name else None
 
     user = execute_returning(
         """
-        INSERT INTO users (email, password_hash, subscription_status, trial_ends_at)
-        VALUES (%s, %s, 'trial', %s)
-        RETURNING id, email, subscription_status, trial_ends_at, created_at
+        INSERT INTO users (email, password_hash, first_name, subscription_status, trial_ends_at)
+        VALUES (%s, %s, %s, 'trial', %s)
+        RETURNING id, email, first_name, subscription_status, trial_ends_at, created_at
         """,
-        (request.email, password_hash, trial_ends_at)
+        (request.email, password_hash, first_name, trial_ends_at)
     )
 
     # Create token
@@ -112,6 +114,7 @@ async def signup(request: SignupRequest):
         "user": {
             "id": user["id"],
             "email": user["email"],
+            "first_name": user["first_name"],
             "subscription_status": user["subscription_status"],
             "trial_ends_at": user["trial_ends_at"].isoformat() if user["trial_ends_at"] else None,
             "created_at": user["created_at"].isoformat() if user["created_at"] else None
@@ -124,7 +127,7 @@ async def login(request: LoginRequest):
     """Login with email and password"""
     # Get user
     user = query_one(
-        "SELECT id, email, password_hash, subscription_status, trial_ends_at, created_at FROM users WHERE email = %s",
+        "SELECT id, email, first_name, password_hash, subscription_status, trial_ends_at, created_at FROM users WHERE email = %s",
         (request.email,)
     )
 
@@ -143,6 +146,7 @@ async def login(request: LoginRequest):
         "user": {
             "id": user["id"],
             "email": user["email"],
+            "first_name": user["first_name"],
             "subscription_status": user["subscription_status"],
             "trial_ends_at": user["trial_ends_at"].isoformat() if user["trial_ends_at"] else None,
             "created_at": user["created_at"].isoformat() if user["created_at"] else None
@@ -162,6 +166,7 @@ async def get_me(user: dict = Depends(get_current_user)):
     return {
         "id": user["id"],
         "email": user["email"],
+        "first_name": user.get("first_name"),
         "subscription_status": user["subscription_status"],
         "trial_ends_at": user["trial_ends_at"].isoformat() if user["trial_ends_at"] else None,
         "created_at": user["created_at"].isoformat() if user["created_at"] else None
@@ -234,3 +239,35 @@ async def update_api_keys(request: ApiKeysRequest, user: dict = Depends(get_curr
     )
 
     return {"success": True, "message": "API keys updated"}
+
+
+class BetaTokenRequest(BaseModel):
+    token: str
+
+
+@router.post("/apply-beta-token")
+async def apply_beta_token(request: BetaTokenRequest, user: dict = Depends(get_current_user)):
+    """Apply beta token to copy API keys from master account"""
+    import json
+    from database import execute
+
+    # Verify beta token
+    if request.token != "ytresearch23":
+        raise HTTPException(status_code=400, detail="Invalid beta token")
+
+    # Get API keys from master account (elianajansick@gmail.com)
+    master = query_one(
+        "SELECT api_keys FROM users WHERE email = %s",
+        ("elianajansick@gmail.com",)
+    )
+
+    if not master or not master["api_keys"]:
+        raise HTTPException(status_code=500, detail="Master account not configured")
+
+    # Copy API keys to user's account
+    execute(
+        "UPDATE users SET api_keys = %s WHERE id = %s",
+        (json.dumps(master["api_keys"]), user["id"])
+    )
+
+    return {"success": True, "message": "Beta API keys applied successfully"}

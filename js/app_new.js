@@ -215,8 +215,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // loadSavedConversations(); // Disabled - removed from UI
     showOnboardingIfNeeded();
     checkStorageQuota(); // Check storage usage on load
+    startHeaderLogoCarousel(); // Start rotating logo icons
     console.log('✅ ASHER fully loaded');
 });
+
+// Header logo provider carousel animation
+function startHeaderLogoCarousel() {
+    const icons = document.querySelectorAll('.header-provider-icon');
+    if (icons.length === 0) return;
+
+    let currentIndex = 0;
+
+    setInterval(() => {
+        icons.forEach(icon => icon.classList.remove('active'));
+        currentIndex = (currentIndex + 1) % icons.length;
+        icons[currentIndex].classList.add('active');
+    }, 1000);
+}
 
 // Show onboarding banner for first-time users
 function showOnboardingIfNeeded() {

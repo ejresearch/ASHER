@@ -109,7 +109,7 @@ def call_ai_provider(provider_id: str, messages: List[Dict], system_prompt: str,
             raise Exception("Google API key not configured. Add it in Settings.")
 
         # Use selected model or default, translate through MODEL_MAP
-        selected_model = MODEL_MAP.get(model, model) if model else "gemini-2.0-flash-exp"
+        selected_model = MODEL_MAP.get(model, model) if model else "gemini-2.5-flash"
 
         genai.configure(api_key=api_key)
         gemini_model = genai.GenerativeModel(selected_model)
