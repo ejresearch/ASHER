@@ -34,6 +34,7 @@ def call_ai_provider(provider_id: str, messages: List[Dict], system_prompt: str,
     import google.generativeai as genai
 
     # Model mapping: friendly ID -> actual API model name
+    # Synced with ai_providers.py for consistency
     MODEL_MAP = {
         # OpenAI - map to real available models
         "gpt-5.1": "gpt-4o",
@@ -44,23 +45,23 @@ def call_ai_provider(provider_id: str, messages: List[Dict], system_prompt: str,
         "o3": "o1-mini",  # o3 doesn't exist, use o1-mini
         "o4-mini": "o1-mini",
         # Claude - map to real available models
-        "claude-sonnet-4.5": "claude-3-5-sonnet-20241022",
+        "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
         "claude-haiku-4.5": "claude-3-5-haiku-20241022",
-        "claude-opus-4.1": "claude-3-opus-20240229",
+        "claude-opus-4.1": "claude-opus-4-1-20250805",
         "claude-opus-4": "claude-3-opus-20240229",
-        "claude-sonnet-4": "claude-3-5-sonnet-20241022",
+        "claude-sonnet-4": "claude-sonnet-4-20250514",
         "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
         "claude-3-opus": "claude-3-opus-20240229",
         "claude-3-haiku": "claude-3-haiku-20240307",
         # Gemini - map to real available models
-        "gemini-2.5-pro": "gemini-1.5-pro",
-        "gemini-2.5-flash": "gemini-1.5-flash",
-        "gemini-2.0-flash": "gemini-1.5-flash",
-        # Grok - map to real available models
-        "grok-4.1-fast": "grok-beta",
-        "grok-4": "grok-beta",
-        "grok-3": "grok-beta",
-        "grok-beta": "grok-beta",
+        "gemini-2.5-pro": "gemini-2.5-pro",
+        "gemini-2.5-flash": "gemini-2.5-flash",
+        "gemini-2.0-flash": "gemini-2.0-flash-001",
+        # Grok - map to real available models (grok-beta deprecated, use grok-3)
+        "grok-4.1-fast": "grok-3",
+        "grok-4": "grok-3",
+        "grok-3": "grok-3",
+        "grok-beta": "grok-3",
     }
 
     # Determine which provider and model to use

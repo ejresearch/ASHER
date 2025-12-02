@@ -635,6 +635,8 @@ function closeApiKeyModal() {
     document.getElementById('api-key-modal').style.display = 'none';
     document.getElementById('api-key-input').value = '';
     currentProviderId = null;
+    // Remove Enter key handler
+    document.removeEventListener('keydown', handleModalEnterKey);
 }
 
 function saveApiKey() {
@@ -1811,6 +1813,18 @@ function openProviderModal(providerId) {
 
     // Show modal
     modal.style.display = 'flex';
+
+    // Add Enter key handler for saving
+    document.addEventListener('keydown', handleModalEnterKey);
+}
+
+// Handle Enter key in modal to trigger save
+function handleModalEnterKey(e) {
+    const modal = document.getElementById('api-key-modal');
+    if (modal.style.display === 'flex' && e.key === 'Enter') {
+        e.preventDefault();
+        saveProviderConfig();
+    }
 }
 
 // Save provider configuration and enable it

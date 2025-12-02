@@ -144,7 +144,7 @@ class GeminiProvider(AIProvider):
 class GrokProvider(AIProvider):
     """xAI Grok Provider (OpenAI-compatible API)"""
 
-    def __init__(self, model: str = "grok-beta"):
+    def __init__(self, model: str = "grok-3"):
         super().__init__()
         self.model = model
         api_key = os.getenv("XAI_API_KEY")
@@ -204,11 +204,11 @@ class AIProviderManager:
         "gemini-2.5-flash": {"class": GeminiProvider, "model": "gemini-2.5-flash", "name": "Gemini 2.5 Flash"},
         "gemini-2.0-flash": {"class": GeminiProvider, "model": "gemini-2.0-flash-001", "name": "Gemini 2.0 Flash"},
 
-        # xAI Grok - Latest Models (Nov 2025)
-        "grok-4-1-fast": {"class": GrokProvider, "model": "grok-4-1-fast-reasoning", "name": "xAI Grok 4.1 Fast"},
-        "grok-4": {"class": GrokProvider, "model": "grok-4", "name": "xAI Grok 4"},
+        # xAI Grok - Latest Models (Dec 2025) - grok-beta deprecated
+        "grok-4-1-fast": {"class": GrokProvider, "model": "grok-3", "name": "xAI Grok 4.1 Fast"},
+        "grok-4": {"class": GrokProvider, "model": "grok-3", "name": "xAI Grok 4"},
         "grok-3": {"class": GrokProvider, "model": "grok-3", "name": "xAI Grok 3"},
-        "grok-beta": {"class": GrokProvider, "model": "grok-beta", "name": "xAI Grok Beta"},
+        "grok": {"class": GrokProvider, "model": "grok-3", "name": "xAI Grok"},
     }
 
     @classmethod
