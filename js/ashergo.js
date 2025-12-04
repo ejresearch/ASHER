@@ -1,6 +1,7 @@
 // AsherGO - Main Application JavaScript
 
-const API_BASE = 'http://localhost:8002';
+// Auto-detect API base - use same origin (works for both local and production)
+const API_BASE = window.location.origin;
 
 // State
 let authToken = localStorage.getItem('ashergo_token');
