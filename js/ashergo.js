@@ -533,7 +533,7 @@ function renderConversationList() {
     `).join('');
 }
 
-async function selectConversation(id) {
+async function selectConversation(id, skipProviderReload = false) {
     try {
         const response = await fetch(`${API_BASE}/api/conversations/${id}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
@@ -548,8 +548,10 @@ async function selectConversation(id) {
         referenceDocuments = currentConversation.documents || [];
         renderDocumentList();
 
-        // Load provider settings for this conversation
-        loadProviderSettings(currentConversation.provider_settings);
+        // Load provider settings for this conversation (skip if just refreshing messages)
+        if (!skipProviderReload) {
+            loadProviderSettings(currentConversation.provider_settings);
+        }
 
         renderConversationList();
         showConversation();
@@ -746,8 +748,8 @@ async function sendMessage() {
 
     sendBtn.disabled = false;
 
-    // Reload conversation to get saved messages
-    await selectConversation(currentConversation.id);
+    // Reload conversation to get saved messages (but keep current provider settings)
+    await selectConversation(currentConversation.id, true);
 }
 
 async function sendToProvider(providerId, message, systemPrompt, panelNum, skipUserMessage = false, model = null) {

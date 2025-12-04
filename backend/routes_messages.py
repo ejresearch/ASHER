@@ -81,7 +81,8 @@ async def send_message(
             )
             all_messages = cur.fetchall()
 
-    # Filter history: include user messages and only this provider's assistant messages
+    # Filter history: only include user messages that this provider responded to
+    # This ensures a provider doesn't see messages sent while it was disabled
     def is_provider_message(model, provider_id):
         """Check if a model string matches the provider"""
         if not model:
@@ -98,11 +99,18 @@ async def send_message(
             return 'grok' in model_lower
         return False
 
+    # Build history: only include user messages that have a response from this provider
+    # This way, if a provider was disabled for a message, it won't see that message later
     history = []
+    current_user_msg = None
     for m in all_messages:
         if m["role"] == "user":
-            history.append({"role": "user", "content": m["content"]})
+            current_user_msg = m["content"]
         elif m["role"] == "assistant" and is_provider_message(m["model"], request.provider):
+            # This provider responded, so include the user message and response
+            if current_user_msg:
+                history.append({"role": "user", "content": current_user_msg})
+                current_user_msg = None  # Only add once per user message
             history.append({"role": "assistant", "content": m["content"]})
 
     # Build messages for AI
