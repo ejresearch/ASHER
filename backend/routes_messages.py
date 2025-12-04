@@ -10,6 +10,7 @@ import os
 from database import query_one, execute_returning, get_db
 from routes_auth import get_current_user
 from psycopg2.extras import RealDictCursor
+from ai_providers import AIProviderManager
 
 router = APIRouter(prefix="/api/conversations", tags=["messages"])
 
@@ -28,132 +29,17 @@ class MessageResponse(BaseModel):
 
 
 def call_ai_provider(provider_id: str, messages: List[Dict], system_prompt: str, api_keys: dict, model: str = None) -> str:
-    """Call AI provider with user's API keys and selected model"""
-    from openai import OpenAI
-    import anthropic
-    import google.generativeai as genai
-
-    # Model mapping: friendly ID -> actual API model name
-    # Synced with ai_providers.py for consistency
-    MODEL_MAP = {
-        # OpenAI - map to real available models
-        "gpt-5.1": "gpt-4o",
-        "gpt-5": "gpt-4o",
-        "gpt-5-mini": "gpt-4o-mini",
-        "gpt-4.1": "gpt-4-turbo",
-        "gpt-4o": "gpt-4o",
-        "o3": "o1-mini",  # o3 doesn't exist, use o1-mini
-        "o4-mini": "o1-mini",
-        # Claude - map to real available models
-        "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-        "claude-haiku-4.5": "claude-3-5-haiku-20241022",
-        "claude-opus-4.1": "claude-opus-4-1-20250805",
-        "claude-opus-4": "claude-3-opus-20240229",
-        "claude-sonnet-4": "claude-sonnet-4-20250514",
-        "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
-        "claude-3-opus": "claude-3-opus-20240229",
-        "claude-3-haiku": "claude-3-haiku-20240307",
-        # Gemini - map to real available models
-        "gemini-2.5-pro": "gemini-2.5-pro",
-        "gemini-2.5-flash": "gemini-2.5-flash",
-        "gemini-2.0-flash": "gemini-2.0-flash-001",
-        # Grok - map to real available models (grok-beta deprecated, use grok-3)
-        "grok-4.1-fast": "grok-3",
-        "grok-4": "grok-3",
-        "grok-3": "grok-3",
-        "grok-beta": "grok-3",
-    }
-
-    # Determine which provider and model to use
-    # OpenAI models: gpt-*, o3, o4-mini, or provider_id == 'openai'
-    if provider_id == 'openai' or provider_id.startswith('gpt') or provider_id.startswith('o3') or provider_id.startswith('o4'):
-        api_key = api_keys.get('openai')
-        if not api_key:
-            raise Exception("OpenAI API key not configured. Add it in Settings.")
-
-        client = OpenAI(api_key=api_key)
-        openai_messages = []
-        if system_prompt:
-            openai_messages.append({"role": "system", "content": system_prompt})
-        openai_messages.extend(messages)
-
-        # Use selected model or default to gpt-4o, translate through MODEL_MAP
-        selected_model = MODEL_MAP.get(model, model) if model else "gpt-4o"
-
-        response = client.chat.completions.create(
-            model=selected_model,
-            messages=openai_messages
-        )
-        return response.choices[0].message.content
-
-    elif provider_id == 'claude' or provider_id.startswith('claude'):
-        api_key = api_keys.get('anthropic')
-        if not api_key:
-            raise Exception("Anthropic API key not configured. Add it in Settings.")
-
-        # Use selected model or default, translate through MODEL_MAP
-        selected_model = MODEL_MAP.get(model, model) if model else "claude-sonnet-4-20250514"
-
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model=selected_model,
-            max_tokens=4096,
-            system=system_prompt if system_prompt else "You are a helpful AI assistant.",
-            messages=messages
-        )
-        return response.content[0].text
-
-    elif provider_id == 'gemini' or provider_id.startswith('gemini'):
-        api_key = api_keys.get('google')
-        if not api_key:
-            raise Exception("Google API key not configured. Add it in Settings.")
-
-        # Use selected model or default, translate through MODEL_MAP
-        selected_model = MODEL_MAP.get(model, model) if model else "gemini-2.5-flash"
-
-        genai.configure(api_key=api_key)
-        gemini_model = genai.GenerativeModel(selected_model)
-
-        # Build chat history
-        chat_history = []
-        for msg in messages[:-1]:
-            role = "user" if msg["role"] == "user" else "model"
-            chat_history.append({"role": role, "parts": [msg["content"]]})
-
-        chat = gemini_model.start_chat(history=chat_history)
-        current_message = messages[-1]["content"]
-        if system_prompt:
-            current_message = f"{system_prompt}\n\n{current_message}"
-
-        response = chat.send_message(current_message)
-        return response.text
-
-    elif provider_id == 'grok' or provider_id.startswith('grok'):
-        api_key = api_keys.get('xai')
-        if not api_key:
-            raise Exception("xAI API key not configured. Add it in Settings.")
-
-        # Use selected model or default, translate through MODEL_MAP
-        selected_model = MODEL_MAP.get(model, model) if model else "grok-2-latest"
-
-        try:
-            client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-            grok_messages = []
-            if system_prompt:
-                grok_messages.append({"role": "system", "content": system_prompt})
-            grok_messages.extend(messages)
-
-            response = client.chat.completions.create(
-                model=selected_model,
-                messages=grok_messages
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"Grok error: {e}")
-            raise Exception(f"Grok API error: {str(e)}")
-
-    else:
-        raise Exception(f"Unknown provider: {provider_id}")
+    """
+    Call AI provider with user's API keys and selected model.
+    This is a thin wrapper around AIProviderManager.chat() for backward compatibility.
+    """
+    return AIProviderManager.chat(
+        provider_id=provider_id,
+        messages=messages,
+        system_prompt=system_prompt,
+        api_keys=api_keys,
+        model=model
+    )
 
 
 @router.post("/{conversation_id}/messages")
@@ -189,7 +75,7 @@ async def send_message(
                 SELECT role, content, model
                 FROM messages
                 WHERE conversation_id = %s
-                ORDER BY timestamp ASC
+                ORDER BY id ASC
                 """,
                 (conversation_id,)
             )

@@ -1,10 +1,9 @@
 // ASHER - AI Provider Testing Lab
 // Simultaneous A/B/C/D Testing
-console.log('🔵 app_new.js is loading...');
 
-// API Configuration - Backend runs on port 8001
+// API Configuration - Backend runs on port 8002
 const API_BASE = window.location.protocol === 'file:' || window.location.port === '8888'
-    ? 'http://localhost:8001'  // When frontend is opened as file or on dev server
+    ? 'http://localhost:8002'  // When frontend is opened as file or on dev server
     : window.location.origin;   // When served from backend directly
 
 // Theme Management - Apple Style Toggle
@@ -189,19 +188,20 @@ const PROVIDER_MAP = {
 
 // Load active state for provider cards (disabled - start fresh each time)
 function loadActiveProviderCards() {
-    // Start with no providers active on page load
-    enabledProviders.clear();
-
-    // Remove active class from all cards
+    // Sync UI state with enabledProviders Set (already loaded by loadProviderConfigs)
     const cards = document.querySelectorAll('.provider-card');
-    cards.forEach(card => card.classList.remove('active'));
-
-    console.log('Starting with no active providers');
+    cards.forEach(card => {
+        const providerId = card.id?.replace('panel-', '');
+        if (providerId && enabledProviders.has(providerId)) {
+            card.classList.add('provider-active');
+        } else {
+            card.classList.remove('provider-active');
+        }
+    });
 }
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 ASHER initializing...');
     loadTheme();
     initializeConversationHistory();
     // loadProviderStatus(); // Disabled - using new card-based UI
@@ -216,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showOnboardingIfNeeded();
     checkStorageQuota(); // Check storage usage on load
     startHeaderLogoCarousel(); // Start rotating logo icons
-    console.log('✅ ASHER fully loaded');
 });
 
 // Header logo provider carousel animation
@@ -292,20 +291,15 @@ document.addEventListener('click', function(e) {
 
 // Setup keyboard shortcuts
 function setupEnterKeyHandler() {
-    console.log('Setting up keyboard shortcuts...');
     const textarea = document.getElementById('test-message');
 
     if (!textarea) {
-        console.error('❌ Textarea not found for keyboard shortcuts');
         return;
     }
-
-    console.log('✅ Textarea found:', textarea);
 
     // Enter to send (in textarea only)
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
-            console.log('Enter pressed in textarea');
             e.preventDefault();
             sendToAllProviders();
         }
@@ -313,11 +307,8 @@ function setupEnterKeyHandler() {
 
     // Global keyboard shortcuts - simplified
     document.addEventListener('keydown', (e) => {
-        console.log('Key pressed:', e.key, 'metaKey:', e.metaKey, 'ctrlKey:', e.ctrlKey);
-
         // Cmd/Ctrl + Enter: Send to all providers
         if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            console.log('🚀 Cmd+Enter triggered');
             e.preventDefault();
             e.stopPropagation();
             sendToAllProviders();
@@ -326,7 +317,6 @@ function setupEnterKeyHandler() {
 
         // Cmd/Ctrl + K: Focus input
         if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-            console.log('🎯 Cmd+K triggered');
             e.preventDefault();
             e.stopPropagation();
             textarea.focus();
@@ -335,7 +325,6 @@ function setupEnterKeyHandler() {
 
         // Escape: Toggle sidebar
         if (e.key === 'Escape') {
-            console.log('🚪 Escape triggered');
             e.preventDefault();
             e.stopPropagation();
             toggleConfigPanel();
@@ -344,7 +333,6 @@ function setupEnterKeyHandler() {
 
         // Cmd/Ctrl + /: Show keyboard shortcuts help
         if ((e.metaKey || e.ctrlKey) && e.key === '/') {
-            console.log('❓ Cmd+/ triggered');
             e.preventDefault();
             e.stopPropagation();
             showKeyboardShortcuts();
@@ -356,16 +344,45 @@ function setupEnterKeyHandler() {
         if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isTyping && !window.getSelection().toString()) {
             const lastResponse = document.querySelector('.message-bubble.assistant:last-of-type .message-content');
             if (lastResponse) {
-                console.log('📋 Cmd+C triggered (copy last response)');
                 e.preventDefault();
                 e.stopPropagation();
                 copyToClipboard(lastResponse.textContent);
                 showToast('Last response copied!');
             }
         }
-    });
 
-    console.log('✅ Keyboard shortcuts initialized');
+        // 1-4: Toggle providers (when not typing)
+        if (!isTyping && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            const providerMap = {
+                '1': 'openai',
+                '2': 'claude',
+                '3': 'gemini',
+                '4': 'grok'
+            };
+            const providerNames = {
+                'openai': 'ChatGPT',
+                'claude': 'Claude',
+                'gemini': 'Gemini',
+                'grok': 'Grok'
+            };
+            const providerId = providerMap[e.key];
+            const isEnabled = enabledProviders.has(providerId);
+            toggleProvider(providerId, !isEnabled);
+
+            // Update UI card state
+            const card = document.querySelector(`.provider-card[data-provider="${providerId}"]`);
+            if (card) {
+                if (!isEnabled) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            }
+
+            showToast(`${providerNames[providerId]} ${!isEnabled ? 'enabled' : 'disabled'}`);
+        }
+    });
 }
 
 // Toast notification helper
@@ -437,6 +454,22 @@ function showKeyboardShortcuts() {
                     <kbd>${modKey} + /</kbd>
                     <span>Show this help</span>
                 </div>
+                <div class="shortcut-item">
+                    <kbd>1</kbd>
+                    <span>Toggle ChatGPT</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>2</kbd>
+                    <span>Toggle Claude</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>3</kbd>
+                    <span>Toggle Gemini</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>4</kbd>
+                    <span>Toggle Grok</span>
+                </div>
             </div>
         </div>
     `;
@@ -469,24 +502,28 @@ function toggleProviderVisual(checkbox) {
         }
     }
 
-    // Update panel active state
+    // Update panel active state and enabledProviders Set
     const panelMap = {
-        'openai-enabled': 'panel-openai',
-        'claude-enabled': 'panel-claude',
-        'gemini-enabled': 'panel-gemini',
-        'grok-enabled': 'panel-grok'
+        'openai-enabled': { panel: 'panel-openai', provider: 'openai' },
+        'claude-enabled': { panel: 'panel-claude', provider: 'claude' },
+        'gemini-enabled': { panel: 'panel-gemini', provider: 'gemini' },
+        'grok-enabled': { panel: 'panel-grok', provider: 'grok' }
     };
 
-    const panelId = panelMap[checkbox.id];
-    if (panelId) {
-        const panel = document.getElementById(panelId);
+    const config = panelMap[checkbox.id];
+    if (config) {
+        const panel = document.getElementById(config.panel);
         if (panel) {
             if (checkbox.checked) {
                 panel.classList.add('provider-active');
+                enabledProviders.add(config.provider);
             } else {
                 panel.classList.remove('provider-active');
+                enabledProviders.delete(config.provider);
             }
         }
+        // Save to localStorage
+        localStorage.setItem(`provider-${config.provider}-enabled`, checkbox.checked);
     }
 
     // Update panel visibility hint
@@ -511,21 +548,24 @@ function updateSelectedProvidersCount() {
 // Initialize panel active states based on checkboxes
 function initializePanelStates() {
     const panelMap = {
-        'openai-enabled': 'panel-openai',
-        'claude-enabled': 'panel-claude',
-        'gemini-enabled': 'panel-gemini',
-        'grok-enabled': 'panel-grok'
+        'openai-enabled': { panel: 'panel-openai', provider: 'openai' },
+        'claude-enabled': { panel: 'panel-claude', provider: 'claude' },
+        'gemini-enabled': { panel: 'panel-gemini', provider: 'gemini' },
+        'grok-enabled': { panel: 'panel-grok', provider: 'grok' }
     };
 
     Object.keys(panelMap).forEach(checkboxId => {
         const checkbox = document.getElementById(checkboxId);
-        const panel = document.getElementById(panelMap[checkboxId]);
+        const config = panelMap[checkboxId];
+        const panel = document.getElementById(config.panel);
 
         if (checkbox && panel) {
             if (checkbox.checked) {
                 panel.classList.add('provider-active');
+                enabledProviders.add(config.provider);
             } else {
                 panel.classList.remove('provider-active');
+                enabledProviders.delete(config.provider);
             }
         }
     });
@@ -723,7 +763,6 @@ function loadReferenceDocuments() {
         if (saved) {
             referenceDocuments = JSON.parse(saved);
             renderReferenceDocuments();
-            console.log(`📚 Loaded ${referenceDocuments.length} reference documents from storage`);
         }
     } catch (e) {
         console.error('Failed to load reference documents:', e);
@@ -756,8 +795,6 @@ function saveCurrentConversation() {
     savedConversations.push(conversation);
     saveSavedConversations();
     renderSavedConversations();
-
-    console.log(`💾 Saved conversation: ${name}`);
 }
 
 // Load a saved conversation
@@ -804,8 +841,6 @@ function loadConversation(conversationId) {
             `;
         }
     });
-
-    console.log(`📂 Loaded conversation: ${conversation.name}`);
 }
 
 // Delete a saved conversation
@@ -820,8 +855,6 @@ function deleteConversation(conversationId) {
     savedConversations = savedConversations.filter(c => c.id !== conversationId);
     saveSavedConversations();
     renderSavedConversations();
-
-    console.log(`🗑️ Deleted conversation: ${conversation.name}`);
 }
 
 // Save conversations to localStorage
@@ -841,7 +874,6 @@ function loadSavedConversations() {
         if (saved) {
             savedConversations = JSON.parse(saved);
             renderSavedConversations();
-            console.log(`📚 Loaded ${savedConversations.length} saved conversations`);
         }
     } catch (e) {
         console.error('Failed to load saved conversations:', e);
@@ -933,8 +965,6 @@ async function handleDocumentUpload(event) {
             referenceDocuments.push(doc);
             renderReferenceDocuments();
             saveReferenceDocuments();
-
-            console.log(`✅ Uploaded: ${data.filename}`);
         } catch (error) {
             console.error(`❌ Upload failed for ${file.name}:`, error);
             alert(`Failed to upload ${file.name}: ${error.message}`);
@@ -983,8 +1013,6 @@ async function uploadDocument() {
             referenceDocuments.push(doc);
             renderReferenceDocuments();
             saveReferenceDocuments();
-
-            console.log(`📄 Uploaded: ${data.filename} (${data.file_type})`);
 
         } catch (error) {
             console.error('Upload error:', error);
@@ -1128,7 +1156,6 @@ function getActiveProviders() {
         }
     });
 
-    console.log('Active providers for API call:', providers);
     return providers;
 }
 
@@ -1231,23 +1258,12 @@ function addContextChangeIndicator(providerId, message) {
 
 // Add message to chat panel
 function addMessage(providerId, role, content, isError = false) {
-    console.log('=== addMessage DEBUG ===');
-    console.log('Provider ID:', providerId);
-    console.log('Role:', role);
-    console.log('Content length:', content?.length || 0);
-    console.log('Content type:', typeof content);
-    console.log('Content value:', content);
-    console.log('Is error:', isError);
-
     const provider = PROVIDER_MAP[providerId];
     if (!provider) {
-        console.error('Provider not found in PROVIDER_MAP:', providerId);
         return;
     }
 
     const messagesContainer = document.getElementById(provider.messagesId);
-    console.log('Messages container ID:', provider.messagesId);
-    console.log('Messages container element:', messagesContainer);
 
     // Remove empty state if exists
     const emptyState = messagesContainer.querySelector('.empty-state');
@@ -1446,15 +1462,6 @@ async function sendToProvider(providerId, message, systemContext) {
         const data = await response.json();
         const timeMs = Date.now() - startTime;
 
-        console.log('=== BACKEND RESPONSE DEBUG ===');
-        console.log('Provider ID:', providerId);
-        console.log('Response OK:', response.ok);
-        console.log('Response status:', response.status);
-        console.log('Data received:', data);
-        console.log('Reply field:', data.reply);
-        console.log('Reply type:', typeof data.reply);
-        console.log('Reply length:', data.reply?.length || 0);
-
         // Remove loading indicator
         if (loadingIndicator) {
             loadingIndicator.remove();
@@ -1471,7 +1478,6 @@ async function sendToProvider(providerId, message, systemContext) {
         }
 
         // Add assistant response
-        console.log('About to call addMessage with reply:', data.reply);
         addMessage(providerId, 'assistant', data.reply);
 
         // Update conversation history
@@ -1561,8 +1567,6 @@ async function sendToAllProviders() {
 
     // Update button text based on active providers
     updateSelectedProvidersCount();
-
-    console.log('✅ All providers responded');
 }
 
 // Store for undo functionality
@@ -1607,8 +1611,6 @@ function clearAllChats() {
         // Reset stats
         document.getElementById(provider.tokensId).textContent = '0 tokens';
     });
-
-    console.log('🧹 All chats cleared');
 
     // Show undo toast
     showUndoToast();
@@ -1680,7 +1682,6 @@ window.undoClearChats = function() {
     }
 
     showToast('Chats restored!');
-    console.log('↩️ Chats restored');
 };
 
 // Panel expand removed - fixed 2x2 grid only
@@ -1844,19 +1845,15 @@ function handleModalEnterKey(e) {
 
 // Save provider configuration and enable it
 function saveProviderConfig() {
-    console.log('saveProviderConfig called');
     const modal = document.getElementById('api-key-modal');
     const providerId = modal.dataset.currentProvider || currentProviderId;
-    console.log('Provider ID:', providerId);
 
     if (!providerId) {
-        console.error('No provider ID found');
         return;
     }
 
     const modelSelect = document.getElementById('model-select');
     const selectedModel = modelSelect.value;
-    console.log('Selected model:', selectedModel);
 
     // Save selected model preference
     localStorage.setItem(`provider-${providerId}-model`, selectedModel);
@@ -1884,10 +1881,8 @@ function saveProviderConfig() {
 
     // Add active class to card
     const card = document.querySelector(`.provider-card[data-provider="${providerId}"]`);
-    console.log('Card found:', card);
     if (card) {
         card.classList.add('active');
-        console.log('Added active class to card');
     }
 
     // Enable the provider (but don't persist to localStorage)
@@ -1900,7 +1895,6 @@ function saveProviderConfig() {
     }
 
     closeApiKeyModal();
-    console.log('Modal closed, provider should be active');
 }
 
 // Disable provider
@@ -2231,7 +2225,6 @@ function exportJSON() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        console.log('📥 JSON exported');
         showToast('JSON export successful!');
     } catch (error) {
         console.error('Export error:', error);
@@ -2324,8 +2317,6 @@ function exportMarkdownTable() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    console.log('📥 Markdown comparison exported');
 }
 
 // Export as plain text
@@ -2380,7 +2371,6 @@ function exportAsPlainText() {
     });
 
     downloadFile(text, `asher-results-${Date.now()}.txt`, 'text/plain');
-    console.log('📥 Plain text exported');
 }
 
 // Export as Markdown
@@ -2439,7 +2429,6 @@ function exportAsMarkdown() {
     });
 
     downloadFile(md, `asher-results-${Date.now()}.md`, 'text/markdown');
-    console.log('📥 Markdown exported');
 }
 
 // Export as PDF
@@ -2539,7 +2528,6 @@ function exportAsPDF() {
     });
 
         doc.save(`asher-results-${Date.now()}.pdf`);
-        console.log('📥 PDF exported');
         showToast('PDF export successful!');
     } catch (error) {
         console.error('PDF export error:', error);

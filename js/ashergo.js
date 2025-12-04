@@ -43,8 +43,6 @@ function resetProvidersToDefault() {
 
 // Load provider settings from conversation data
 function loadProviderSettings(settings) {
-    console.log('loadProviderSettings: Received settings:', settings);
-
     // Start with defaults
     enabledProviders = new Set(['1', '2', '3', '4']);
     providerModels = {
@@ -72,17 +70,12 @@ function loadProviderSettings(settings) {
         });
     }
 
-    console.log('loadProviderSettings: enabledProviders after loading:', Array.from(enabledProviders));
-    console.log('loadProviderSettings: providerModels after loading:', providerModels);
     initProviderUI();
 }
 
 // Save provider settings to current conversation
 async function saveProviderSettings() {
-    if (!currentConversation) {
-        console.log('saveProviderSettings: No current conversation, skipping');
-        return;
-    }
+    if (!currentConversation) return;
 
     const settings = {};
     ['1', '2', '3', '4'].forEach(num => {
@@ -91,8 +84,6 @@ async function saveProviderSettings() {
             model: providerModels[num]
         };
     });
-
-    console.log('saveProviderSettings: Saving settings to conversation', currentConversation.id, settings);
 
     try {
         const response = await fetch(`${API_BASE}/api/conversations/${currentConversation.id}`, {
@@ -103,8 +94,7 @@ async function saveProviderSettings() {
             },
             body: JSON.stringify({ provider_settings: settings })
         });
-        const result = await response.json();
-        console.log('saveProviderSettings: Server response:', result);
+        await response.json();
     } catch (error) {
         console.error('Error saving provider settings:', error);
     }
@@ -172,10 +162,6 @@ function toggleProvider(num) {
     } else {
         enabledProviders.delete(num);
     }
-
-    console.log(`=== TOGGLE PROVIDER ${num} (${PROVIDER_INFO[num].name}) ===`);
-    console.log(`Changed from ${wasEnabled} to ${isNowEnabled}`);
-    console.log(`enabledProviders is now:`, Array.from(enabledProviders));
 
     badge.classList.toggle('disabled', !isNowEnabled);
     panel.classList.toggle('disabled', !isNowEnabled);
@@ -527,23 +513,50 @@ function renderMessages() {
             container.innerHTML = '';
         });
 
-        // Add messages to appropriate panels based on model
-        // Only show messages in ENABLED panels
+        // First, determine which providers have responded to each user message
+        // Build a map of user message index -> set of providers that responded
+        const userMessageProviders = {};
+        let userMsgIndex = -1;
+        messages.forEach((msg, i) => {
+            if (msg.role === 'user') {
+                userMsgIndex++;
+                userMessageProviders[userMsgIndex] = new Set();
+            } else if (msg.role === 'assistant' && userMsgIndex >= 0) {
+                const panelNum = getProviderPanel(msg.model);
+                if (panelNum) {
+                    userMessageProviders[userMsgIndex].add(panelNum);
+                }
+            }
+        });
+
+        // Now render messages - only show user messages in panels that responded
+        userMsgIndex = -1;
         messages.forEach(msg => {
             const panelNum = getProviderPanel(msg.model);
-            if (panelNum && enabledProviders.has(panelNum)) {
-                addMessageToPanel(panelNum, msg.role, msg.content);
-            } else if (msg.role === 'user') {
-                // User messages go to all ENABLED panels
-                ['1', '2', '3', '4'].forEach(num => {
+            if (msg.role === 'user') {
+                userMsgIndex++;
+                // Only add to panels that have a response for this message AND are enabled
+                const respondedPanels = userMessageProviders[userMsgIndex] || new Set();
+                respondedPanels.forEach(num => {
                     if (enabledProviders.has(num)) {
                         addMessageToPanel(num, 'user', msg.content);
                     }
                 });
+            } else if (panelNum && enabledProviders.has(panelNum)) {
+                addMessageToPanel(panelNum, msg.role, msg.content);
             }
         });
     } else {
-        // Single view
+        // Single view - only show if provider is enabled
+        if (!enabledProviders.has(currentTab)) {
+            // Provider is disabled, switch to 'all' view
+            currentTab = 'all';
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="all"]')?.classList.add('active');
+            renderMessages(); // Re-render in grid view
+            return;
+        }
+
         document.getElementById('grid-view').style.display = 'none';
         document.getElementById('single-view').style.display = 'flex';
 
@@ -625,14 +638,8 @@ async function sendMessage() {
     // Build context from system prompt AND reference documents
     const systemContext = buildContext();
 
-    // Debug: Log provider state at time of sending
-    console.log('=== SENDING MESSAGE ===');
-    console.log('enabledProviders Set:', Array.from(enabledProviders));
-    console.log('providerModels:', providerModels);
-
     // Get enabled provider numbers from the Set
     const activeProviderNums = Array.from(enabledProviders);
-    console.log('Active provider numbers:', activeProviderNums);
 
     if (activeProviderNums.length === 0) {
         alert('No providers enabled. Click a provider logo to enable it.');
