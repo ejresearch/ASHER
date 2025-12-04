@@ -71,6 +71,14 @@ async def serve_ashergo():
 async def serve_ashergo_html():
     return FileResponse(str(parent_dir / "ashergo.html"))
 
+@app.get("/landing.html")
+async def serve_landing_html():
+    return FileResponse(str(parent_dir / "landing.html"))
+
+@app.get("/auth.html")
+async def serve_auth_html():
+    return FileResponse(str(parent_dir / "auth.html"))
+
 @app.get("/manifest.json")
 async def serve_manifest():
     return FileResponse(str(parent_dir / "manifest.json"))
@@ -122,10 +130,10 @@ class AsherTestResponse(BaseModel):
     error: Optional[str] = None
 
 
-# Root endpoint - serve the ASHER frontend
+# Root endpoint - serve the landing page
 @app.get("/")
 async def root():
-    return FileResponse(str(parent_dir / "index.html"))
+    return FileResponse(str(parent_dir / "landing.html"))
 
 # API info endpoint
 @app.get("/api")

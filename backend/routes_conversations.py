@@ -135,13 +135,13 @@ async def get_conversation(conversation_id: int, user: dict = Depends(get_curren
             if not conversation:
                 raise HTTPException(status_code=404, detail="Conversation not found")
 
-            # Get messages
+            # Get messages (order by id to ensure user messages come before their responses)
             cur.execute(
                 """
                 SELECT id, role, content, model, timestamp
                 FROM messages
                 WHERE conversation_id = %s
-                ORDER BY timestamp ASC
+                ORDER BY id ASC
                 """,
                 (conversation_id,)
             )

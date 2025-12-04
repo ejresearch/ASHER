@@ -286,6 +286,10 @@ function setupEventListeners() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        // Check if user is typing in an input field
+        const isTyping = document.activeElement.tagName === 'INPUT' ||
+                         document.activeElement.tagName === 'TEXTAREA';
+
         // Escape key - toggle sidebar or close modals
         if (e.key === 'Escape') {
             // Check if any modal is open and close it
@@ -304,7 +308,70 @@ function setupEventListeners() {
                 toggleSidebar();
             }
         }
+
+        // 1-4: Toggle providers (when not typing)
+        if (!isTyping && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            // Click the toggle checkbox to trigger the existing toggleProvider function
+            const toggle = document.getElementById(`toggle-${e.key}`);
+            if (toggle) {
+                toggle.click();
+            }
+        }
+
+        // Shift+? - Show keyboard shortcuts
+        if (e.key === '?' && e.shiftKey && !isTyping) {
+            e.preventDefault();
+            showKeyboardShortcuts();
+        }
     });
+}
+
+// Show keyboard shortcuts modal
+function showKeyboardShortcuts() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'shortcuts-modal';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button class="modal-close" onclick="document.getElementById('shortcuts-modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: left;">
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">1</kbd>
+                        <span>Toggle ChatGPT</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">2</kbd>
+                        <span>Toggle Claude</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">3</kbd>
+                        <span>Toggle Gemini</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">4</kbd>
+                        <span>Toggle Grok</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">Esc</kbd>
+                        <span>Toggle sidebar / Close modal</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <kbd style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 4px;">?</kbd>
+                        <span>Show this help</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+    document.body.appendChild(modal);
 }
 
 // Auth Functions
