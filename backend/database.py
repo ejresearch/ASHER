@@ -10,7 +10,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Get DATABASE_URL and fix postgres:// to postgresql:// for psycopg2 compatibility
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/ashergo")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 
 @contextmanager
