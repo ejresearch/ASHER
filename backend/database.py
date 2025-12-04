@@ -75,9 +75,31 @@ def init_db():
                     id SERIAL PRIMARY KEY,
                     email VARCHAR(255) UNIQUE NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
+                    first_name VARCHAR(100),
+                    subscription_status VARCHAR(50) DEFAULT 'trial',
+                    trial_ends_at TIMESTAMP,
                     api_keys JSONB DEFAULT '{}',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
+
+            # Add missing columns to users table if they don't exist
+            cur.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='first_name') THEN
+                        ALTER TABLE users ADD COLUMN first_name VARCHAR(100);
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='subscription_status') THEN
+                        ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT 'trial';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='trial_ends_at') THEN
+                        ALTER TABLE users ADD COLUMN trial_ends_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='api_keys') THEN
+                        ALTER TABLE users ADD COLUMN api_keys JSONB DEFAULT '{}';
+                    END IF;
+                END $$;
             """)
 
             # Conversations table
