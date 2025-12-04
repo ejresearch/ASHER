@@ -156,8 +156,8 @@ const PROVIDER_MAP = {
         timeId: 'gemini-time'
     },
     // Grok Models
-    'grok-4-1-fast': {
-        id: 'grok-4-1-fast',
+    'grok-4.1-fast': {
+        id: 'grok-4.1-fast',
         name: 'xAI Grok 4.1 Fast',
         messagesId: 'messages-grok',
         tokensId: 'grok-tokens',
@@ -1146,7 +1146,7 @@ function getActiveProviders() {
         'openai': 'openai-gpt5.1',
         'claude': 'claude-sonnet-4.5',
         'gemini': 'gemini-2.5-pro',
-        'grok': 'grok-4-1-fast'
+        'grok': 'grok-4.1-fast'
     };
 
     // Check enabledProviders Set and add corresponding model IDs
