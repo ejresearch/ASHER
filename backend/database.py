@@ -109,10 +109,21 @@ def init_db():
                     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     title VARCHAR(255) DEFAULT 'New Conversation',
                     system_prompt TEXT DEFAULT '',
+                    documents JSONB DEFAULT '[]',
                     provider_settings JSONB DEFAULT '{}',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
+
+            # Add missing columns to conversations table if they don't exist
+            cur.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='conversations' AND column_name='documents') THEN
+                        ALTER TABLE conversations ADD COLUMN documents JSONB DEFAULT '[]';
+                    END IF;
+                END $$;
             """)
 
             # Messages table
