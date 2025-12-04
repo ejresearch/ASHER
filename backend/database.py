@@ -60,3 +60,47 @@ def execute_returning(sql, params=None):
             cur.execute(sql, params)
             row = cur.fetchone()
             return dict(row) if row else None
+
+
+def init_db():
+    """Initialize database tables if they don't exist"""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            # Users table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    api_keys JSONB DEFAULT '{}',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Conversations table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    title VARCHAR(255) DEFAULT 'New Conversation',
+                    system_prompt TEXT DEFAULT '',
+                    provider_settings JSONB DEFAULT '{}',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Messages table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS messages (
+                    id SERIAL PRIMARY KEY,
+                    conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+                    role VARCHAR(20) NOT NULL,
+                    content TEXT NOT NULL,
+                    model VARCHAR(100),
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            conn.commit()
+            print("Database tables initialized")

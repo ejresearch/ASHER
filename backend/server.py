@@ -25,6 +25,7 @@ from document_storage import DocumentStorage
 from routes_auth import router as auth_router
 from routes_conversations import router as conversations_router
 from routes_messages import router as messages_router
+from database import init_db
 
 # Initialize persistent document storage
 document_storage = DocumentStorage(storage_path="data/documents.json")
@@ -44,6 +45,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 # Include AsherGO routers
 app.include_router(auth_router)
