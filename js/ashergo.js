@@ -411,6 +411,12 @@ async function handleLogin(e) {
             body: JSON.stringify({ email, password })
         });
 
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -439,6 +445,12 @@ async function handleSignup(e) {
             body: JSON.stringify({ email, password })
         });
 
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -459,6 +471,12 @@ async function checkAuth() {
         const response = await fetch(`${API_BASE}/api/auth/me`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server error');
+        }
 
         if (!response.ok) {
             throw new Error('Invalid token');
@@ -509,6 +527,12 @@ async function loadConversations() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+
         const data = await response.json();
         conversations = data.conversations || [];
         renderConversationList();
@@ -539,6 +563,12 @@ async function selectConversation(id, skipProviderReload = false) {
         const response = await fetch(`${API_BASE}/api/conversations/${id}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
 
         if (!response.ok) throw new Error('Failed to load conversation');
 
@@ -770,10 +800,16 @@ async function sendToProvider(providerId, message, systemPrompt, panelNum, skipU
             })
         });
 
-        const data = await response.json();
-
         // Remove loading indicator
         removeLoadingFromPanel(panelNum);
+
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+
+        const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.detail || 'Failed to send message');
@@ -904,6 +940,12 @@ async function createConversation() {
             },
             body: JSON.stringify({ title })
         });
+
+        // Handle non-JSON responses (like 502 error pages)
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
 
         if (!response.ok) throw new Error('Failed to create conversation');
 
